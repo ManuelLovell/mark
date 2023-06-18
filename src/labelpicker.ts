@@ -19,7 +19,7 @@ OBR.onReady(async () =>
     const meta = metadata[`${Constants.EXTENSIONID}/metadata_marks`] as any;
     const saveData = meta?.saveData as ISaveData;
 
-    if (saveData.Labels.length === 0)
+    if (saveData.Labels?.length === 0)
     {
         document.querySelector("#label-list1")!.innerHTML = `
         <div>
