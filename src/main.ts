@@ -131,7 +131,7 @@ OBR.onReady(async () =>
     }
     else
     {
-        LoadDefaults();
+        await LoadDefaults();
     }
 
     //Create Save Button
@@ -322,8 +322,7 @@ async function Reset(): Promise<void>
     if (confirm("Erase everything and go back to default labels?"))
     {
         table.innerHTML = "";
-        LoadDefaults();
-        await Save();
+        await LoadDefaults();
     }
 }
 
@@ -342,7 +341,7 @@ async function Reset(): Promise<void>
 //     }
 // }
 
-function LoadDefaults(): void
+async function LoadDefaults(): Promise<void>
 {
     groupOne.value = defaultGroups[0];
     groupTwo.value = defaultGroups[1];
@@ -353,4 +352,5 @@ function LoadDefaults(): void
     {
         AddToGroup(label);
     });
+    await Save();
 }
