@@ -33,8 +33,7 @@ Coloris.close();
 
 // Set base HTML (Set Loading instead..)
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div id="loadingApp">
-  <h1>Loading...</div>
+  <div id="loadingApp" class="center">Loading...</div>
   <div id="labelApp" style="display:none;">
   Mark!<div id="mainButtons"></div>
   <div id="buttonLabels">
@@ -102,86 +101,18 @@ OBR.onReady(async () =>
 {
     setupContextMenu();
 
-    const roomsLabels = await OBR.room.getMetadata();
-    const meta = roomsLabels[`${Constants.EXTENSIONID}/metadata_marks`] as any;
-    const saveData = meta?.saveData as ISaveData;
-    if (saveData && saveData.Labels?.length > 0)
+    // Add GM CHECK //
+    const role = await OBR.player.getRole();
+    if (role === "GM")
     {
-        saveData.Labels.forEach((label) =>
-        {
-            AddToGroup(label);
-        });
-        saveData.Groups.forEach((group) =>
-        {
-            switch (group.Num)
-            {
-                case '#1':
-                    groupOne.value = group.Name;
-                    break;
-                case '#2':
-                    groupTwo.value = group.Name;
-                    break;
-                case '#3':
-                    groupThree.value = group.Name;
-                    break;
-                default:
-                    throw new Error('Invalid Group');
-            }
-        });
+       await SetupConfigAction();
     }
     else
     {
-        await LoadDefaults();
+        loadingApp.innerHTML = `Configuration is GM-Access only.`;
+        await OBR.action.setHeight(70);
+        await OBR.action.setWidth(150);
     }
-
-    //Create Save Button
-    const saveButton = document.createElement('input');
-    saveButton.type = "image";
-    saveButton.className = "Icon clickable";
-    saveButton.id = "saveButton";
-    saveButton.onclick = async function () 
-    {
-        await Save();
-    }
-    saveButton.src = "/save.svg";
-    saveButton.title = "Save Changes";
-    saveButton.height = 20;
-    saveButton.width = 20;
-    mainButtonContainer.appendChild(saveButton);
-
-    //Create Add Button
-    const addButton = document.createElement('input');
-    addButton.type = "image";
-    addButton.className = "Icon clickable";
-    addButton.id = "addButton";
-    addButton.onclick = async function () 
-    {
-        await AddToGroup();
-    }
-    addButton.src = "/add.svg";
-    addButton.title = "Add Label";
-    addButton.height = 20;
-    addButton.width = 20;
-    mainButtonContainer.appendChild(addButton);
-
-    //Create Reset Button
-    const resetButton = document.createElement('input');
-    resetButton.type = "image";
-    resetButton.className = "Icon clickable";
-    resetButton.id = "addButton";
-    resetButton.onclick = async function () 
-    {
-        await Reset();
-    }
-    resetButton.src = "/reset.svg";
-    resetButton.title = "Reset to Default Labels";
-    resetButton.height = 20;
-    resetButton.width = 20;
-    mainButtonContainer.appendChild(resetButton);
-
-    // Once all loaded, display the extension.
-    loadingApp.style.display = "none";
-    labelApp.style.display = "";
 
 });
 
@@ -305,11 +236,11 @@ async function Save(): Promise<void>
         labels.push(label);
     }
 
-    groups.push({Name: groupOne.value, Num: "#1"});
-    groups.push({Name: groupTwo.value, Num: "#2"});
-    groups.push({Name: groupThree.value, Num: "#3"});
+    groups.push({ Name: groupOne.value, Num: "#1" });
+    groups.push({ Name: groupTwo.value, Num: "#2" });
+    groups.push({ Name: groupThree.value, Num: "#3" });
 
-    const saveData: ISaveData = {Groups: groups, Labels: labels};
+    const saveData: ISaveData = { Groups: groups, Labels: labels };
 
     let markMeta: Metadata = {};
     markMeta[`${Constants.EXTENSIONID}/metadata_marks`] = { saveData };
@@ -326,21 +257,6 @@ async function Reset(): Promise<void>
     }
 }
 
-// function GetGroupName(number: string): string
-// {
-//     switch (number)
-//     {
-//         case '#1':
-//             return groupOne.value;;
-//         case '#2':
-//             return groupTwo.value;;
-//         case '#3':
-//             return groupThree.value;;
-//         default:
-//             throw new Error('Invalid Group');
-//     }
-// }
-
 async function LoadDefaults(): Promise<void>
 {
     groupOne.value = defaultGroups[0];
@@ -353,4 +269,88 @@ async function LoadDefaults(): Promise<void>
         AddToGroup(label);
     });
     await Save();
+}
+
+async function SetupConfigAction(): Promise<void>
+{
+    const roomsLabels = await OBR.room.getMetadata();
+    const meta = roomsLabels[`${Constants.EXTENSIONID}/metadata_marks`] as any;
+    const saveData = meta?.saveData as ISaveData;
+    if (saveData && saveData.Labels?.length > 0)
+    {
+        saveData.Labels.forEach((label) =>
+        {
+            AddToGroup(label);
+        });
+        saveData.Groups.forEach((group) =>
+        {
+            switch (group.Num)
+            {
+                case '#1':
+                    groupOne.value = group.Name;
+                    break;
+                case '#2':
+                    groupTwo.value = group.Name;
+                    break;
+                case '#3':
+                    groupThree.value = group.Name;
+                    break;
+                default:
+                    throw new Error('Invalid Group');
+            }
+        });
+    }
+    else
+    {
+        await LoadDefaults();
+    }
+
+    //Create Save Button
+    const saveButton = document.createElement('input');
+    saveButton.type = "image";
+    saveButton.className = "Icon clickable";
+    saveButton.id = "saveButton";
+    saveButton.onclick = async function () 
+    {
+        await Save();
+    }
+    saveButton.src = "/save.svg";
+    saveButton.title = "Save Changes";
+    saveButton.height = 20;
+    saveButton.width = 20;
+    mainButtonContainer.appendChild(saveButton);
+
+    //Create Add Button
+    const addButton = document.createElement('input');
+    addButton.type = "image";
+    addButton.className = "Icon clickable";
+    addButton.id = "addButton";
+    addButton.onclick = async function () 
+    {
+        await AddToGroup();
+    }
+    addButton.src = "/add.svg";
+    addButton.title = "Add Label";
+    addButton.height = 20;
+    addButton.width = 20;
+    mainButtonContainer.appendChild(addButton);
+
+    //Create Reset Button
+    const resetButton = document.createElement('input');
+    resetButton.type = "image";
+    resetButton.className = "Icon clickable";
+    resetButton.id = "addButton";
+    resetButton.onclick = async function () 
+    {
+        await Reset();
+    }
+    resetButton.src = "/reset.svg";
+    resetButton.title = "Reset to Default Labels";
+    resetButton.height = 20;
+    resetButton.width = 20;
+    mainButtonContainer.appendChild(resetButton);
+
+    // Once all loaded, display the extension.
+    loadingApp.style.display = "none";
+    labelApp.style.display = "";
 }

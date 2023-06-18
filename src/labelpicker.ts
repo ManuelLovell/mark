@@ -19,15 +19,8 @@ OBR.onReady(async () =>
     const meta = metadata[`${Constants.EXTENSIONID}/metadata_marks`] as any;
     const saveData = meta?.saveData as ISaveData;
 
-    if (saveData && saveData.Labels?.length === 0)
-    {
-        document.querySelector("#label-list1")!.innerHTML = `
-        <div>
-        No labels found.
-        </div>`;
-    }
-    else
-    {
+    if (saveData && saveData.Labels?.length > 0)
+    {        
         const list1 = document.querySelector<HTMLDivElement>('#label-list1')!;
         const list2 = document.querySelector<HTMLDivElement>('#label-list2')!;
         const list3 = document.querySelector<HTMLDivElement>('#label-list3')!;
@@ -118,6 +111,13 @@ OBR.onReady(async () =>
                 list3.style.display = "";
             }
         }
+    }
+    else
+    {
+        document.querySelector("#label-list1")!.innerHTML = `
+        <div>
+        No labels found.
+        </div>`;
     }
 
     async function ToggleLabel(id: string)
