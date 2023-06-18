@@ -1,4 +1,5 @@
 import OBR from "@owlbear-rodeo/sdk";
+import { Constants } from "./constants";
 
 const ID = "com.tutorial.initiative-tracker";
 
@@ -17,9 +18,19 @@ export function setupContextMenu()
                 },
             },
         ],
-        onClick(context)
+        async onClick(context, elementId: string)
         {
-            console.log(context.items[0].name);
+            if (context.items.length == 1)
+            {
+                console.log(context.items[0].name);
+                await OBR.popover.open({
+                    id: Constants.LABELSID,
+                    url: `/labelpicker.html?targetid=${context.items[0].id}`,
+                    height: 250,
+                    width: 300,
+                    anchorElementId: elementId
+                });
+            }
         },
     });
 }

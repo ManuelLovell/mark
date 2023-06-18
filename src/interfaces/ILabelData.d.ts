@@ -5,4 +5,5 @@ interface ILabelData
     Direction: string;
     Color: string;
     Active: number;
+    Group: string;
 }
