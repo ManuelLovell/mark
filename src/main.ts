@@ -105,7 +105,7 @@ OBR.onReady(async () =>
     const roomsLabels = await OBR.room.getMetadata();
     const meta = roomsLabels[`${Constants.EXTENSIONID}/metadata_marks`] as any;
     const saveData = meta?.saveData as ISaveData;
-    if (saveData.Labels.length > 0)
+    if (saveData.Labels?.length > 0)
     {
         saveData.Labels.forEach((label) =>
         {
