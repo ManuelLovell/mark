@@ -22,10 +22,19 @@ export function setupContextMenu()
         {
             if (context.items.length == 1)
             {
-                console.log(context.items[0].name);
                 await OBR.popover.open({
                     id: Constants.LABELSID,
                     url: `/labelpicker.html?targetid=${context.items[0].id}`,
+                    height: 250,
+                    width: 300,
+                    anchorElementId: elementId
+                });
+            }
+            else
+            {
+                await OBR.popover.open({
+                    id: Constants.LABELSID,
+                    url: `/labelpicker.html?targetid=${context.items.map(item => item.id).toString()}&multi=true`,
                     height: 250,
                     width: 300,
                     anchorElementId: elementId

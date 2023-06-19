@@ -1,4 +1,4 @@
-import OBR, { Image } from "@owlbear-rodeo/sdk";
+import OBR, { Image, Label } from "@owlbear-rodeo/sdk";
 import { LabelLogic } from "./label-logic";
 import { Constants } from "./constants";
 import * as Utilities from './utilities';
@@ -12,6 +12,17 @@ OBR.onReady(async () =>
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const idParam = urlParams.get('targetid')!;
+    const multiParam = urlParams.get('multi');
+    const multiIds = multiParam ? idParam.split(",") : [];
+    let attachedLabels: Label[] = [];
+
+    const target = await OBR.scene.items.getItems(multiParam ? multiIds : [idParam]) as Image[];
+    if (!multiParam)
+    {
+        attachedLabels = await OBR.scene.items.getItems<Label>((item: any) =>
+            item.attachedTo === target[0].id
+            && item.type === "LABEL");
+    }
 
     // Set theme accordingly
     const theme = await OBR.theme.getTheme();
@@ -66,9 +77,11 @@ OBR.onReady(async () =>
         {
             if (label.Active)
             {
+                const highlight = attachedLabels.find(attach => attach.text.plainText === label.Name);
+
                 const toggleButton = <HTMLButtonElement>document.createElement('button');
                 toggleButton.id = `toggle-${label.Id}`;
-                toggleButton.className = 'group1';
+                toggleButton.className = `group1${highlight ? " highlight" : ""}`;
                 toggleButton.value = label.Name;
                 toggleButton.title = label.Name;
                 toggleButton.textContent = label.Name;
@@ -91,7 +104,7 @@ OBR.onReady(async () =>
         const toggleButtons = document.querySelectorAll('.group1');
         toggleButtons.forEach(btn =>
         {
-            btn.addEventListener('click', async (e: Event) => await ToggleLabel((e.currentTarget as Element).id));
+            btn.addEventListener('click', async (e: Event) => await ToggleLabel(e.currentTarget as Element));
         });
 
         ShowCategory("#1");
@@ -126,12 +139,19 @@ OBR.onReady(async () =>
         </div>`;
     }
 
-    async function ToggleLabel(id: string)
+    async function ToggleLabel(elem: Element)
     {
-        const cleanedId = id.substring(7);
+        const cleanedId = elem.id.substring(7);
         const label = saveData.Labels.find(label => label.Id === cleanedId);
-        const target = await OBR.scene.items.getItems([idParam]) as Image[];
-        await LabelLogic.UpdateLabel(target[0], label!);
-        console.log("Labeled");
+
+        if (!multiParam)
+        {
+            elem.className = elem.className === "group1" ? "group1 highlight" : "group1";
+        }
+
+        target.forEach(async (t) =>
+        {
+            await LabelLogic.UpdateLabel(t, label!);
+        });
     }
 });

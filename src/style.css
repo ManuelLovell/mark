@@ -100,7 +100,12 @@ td {
     align-items: inital;
     overflow: scroll;
 }
-
+.highlight
+{
+    border-color: red !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+}
 .group1 {
     padding: 5px 5px;
     cursor: pointer;
