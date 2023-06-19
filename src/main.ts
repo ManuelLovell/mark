@@ -5,6 +5,7 @@ import Coloris from "@melloware/coloris";
 import { GetGUID, HexToRgb, RgbToHex } from './utilities';
 import './style.css'
 import { Constants } from './constants';
+import * as Utilities from './utilities';
 
 //#region Coloris Initialization
 Coloris.init();
@@ -54,11 +55,11 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <table id="table-one" style="width:100%">
   <thead>
   <tr>
-  <th style="width: 5%">☑️</th>
-  <th style="width: 50%">Label Name</th>
-  <th style="width: 20%">Group</th>
+  <th style="width: 5%">🔛</th>
+  <th style="width: 55%">Label Name</th>
+  <th style="width: 10%">Group</th>
   <th style="width: 20%">Direction</th>
-  <th style="width: 5%">🖍️</th>
+  <th style="width: 10%">🖍️</th>
   </tr>
   </thead>
   <tbody id="label-list"></tbody>
@@ -101,11 +102,19 @@ OBR.onReady(async () =>
 {
     setupContextMenu();
 
+    // Set theme accordingly
+    const theme = await OBR.theme.getTheme();
+    Utilities.SetThemeMode(theme, document);
+    OBR.theme.onChange((theme) =>
+    {
+        Utilities.SetThemeMode(theme, document);
+    })
+
     // Add GM CHECK //
     const role = await OBR.player.getRole();
     if (role === "GM")
     {
-       await SetupConfigAction();
+        await SetupConfigAction();
     }
     else
     {
@@ -119,7 +128,7 @@ OBR.onReady(async () =>
 /** Add row to table one */
 function AddToGroup(label?: ILabelData)
 {
-    const row = table.insertRow(-1);
+    const row = table.insertRow(0);
     row.id = GetGUID();
     const checkbox = row.insertCell(0);
     const name = row.insertCell(1);
@@ -141,7 +150,7 @@ function AddToGroup(label?: ILabelData)
     const color = row.insertCell(4);
     color.id = row.id;
     color.className = "center";
-    checkbox.innerHTML = `<input id="checkbox_${row.id}" type="checkbox" ${label?.Active ? "checked" : ""}/>`;
+    checkbox.innerHTML = `<input id="checkbox_${row.id}" type="checkbox" ${label?.Active === 0 ? "" : "checked"}/>`;
 
     const rgbColorString = label ? HexToRgb(label.Color) : undefined;
     color.appendChild(AddColorisInput(color.id, rgbColorString));
