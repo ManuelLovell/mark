@@ -5,7 +5,7 @@
     "icon": "/logo.png",
     "manifest_version": 1,
     "action": {
-      "title": "Mark!",
+      "title": "Marked!",
       "icon": "/icon.svg",
       "popover": "/",
       "height": 600,
