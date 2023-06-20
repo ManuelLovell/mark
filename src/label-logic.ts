@@ -4,11 +4,13 @@ import { Constants } from "./constants";
 
 export class LabelLogic
 {
-    static async UpdateLabel(image: Image, labelData: ILabelData): Promise<void>
+    static async UpdateLabel(image: Image, labelData: ILabelData, distance: string): Promise<void>
     {
         const comboId = CombineGUIDs(image.id, labelData.Id);
         const labelItemExists = await OBR.scene.items.getItems([comboId]);
         const backgroundColor = "#242424";
+        const labelSpacing = parseInt(distance);
+
         let placement = 0;
 
         if (labelItemExists.length === 0)
@@ -59,7 +61,7 @@ export class LabelLogic
                 {
                     label.position.y -= 15;
 
-                    label.position.y -= (35 * placement);
+                    label.position.y -= (labelSpacing * placement);
                 }
             }
             if (labelData.Direction == "Bottom")
@@ -70,7 +72,7 @@ export class LabelLogic
                 {
                     label.position.y += 15;
 
-                    label.position.y += (35 * placement);
+                    label.position.y += (labelSpacing * placement);
                 }
             }
             if (labelData.Direction == "Right")
@@ -79,7 +81,7 @@ export class LabelLogic
                 pointer = "LEFT";
                 if (brothers.length > 0 && placement !== 0)
                 {
-                    label.position.y += (35 * placement);
+                    label.position.y += (labelSpacing * placement);
                 }
             }
             if (labelData.Direction == "Left")
@@ -88,7 +90,7 @@ export class LabelLogic
                 pointer = "RIGHT";
                 if (brothers.length > 0 && placement !== 0)
                 {
-                    label.position.y -= (35 * placement);
+                    label.position.y -= (labelSpacing  * placement);
                 }
             }
             if (brothers.length > 0 && placement !== 0)

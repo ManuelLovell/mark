@@ -36,7 +36,6 @@ Coloris.close();
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div id="loadingApp" class="center">Loading...</div>
   <div id="labelApp" style="display:none;">
-  Mark!<div id="mainButtons"></div>
   <div id="buttonLabels">
   <div class="nameGroup center">
   <label for="gr1n">Group #1</label><br>
@@ -51,6 +50,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <input type="text" id="gr3n" name="gr3n" maxlength="15" size="10">
   </div>
   </div>
+  <div id="mainButtonsGroup" class="center"><label for="distance">Label Spacing: </label><input type="number" id="distance" name="distance"><div id="mainButtons"></div></div>
   <hr style="height:1px; visibility:hidden;" />
   <table id="table-one" style="width:100%">
   <thead>
@@ -75,6 +75,7 @@ const mainButtonContainer = <HTMLButtonElement>document.getElementById("mainButt
 const groupOne = <HTMLInputElement>document.getElementById("gr1n")!;
 const groupTwo = <HTMLInputElement>document.getElementById("gr2n")!;
 const groupThree = <HTMLInputElement>document.getElementById("gr3n")!;
+const distance = <HTMLInputElement>document.getElementById("distance")!;
 
 // Test Data
 const defaultSet: ILabelData[] = [
@@ -97,6 +98,7 @@ const defaultSet: ILabelData[] = [
     { Id: "17", Name: "Champion 👑", Color: "#FFFFFF", Group: "#3", Direction: "Right", Active: 1 },
 ];
 const defaultGroups: string[] = ["Conditions", "Buffs", "Extra"];
+const defaultSpacing = "35";
 
 OBR.onReady(async () =>
 {
@@ -222,6 +224,7 @@ async function Save(): Promise<void>
 {
     const labels: ILabelData[] = [];
     const groups: IGroup[] = [];
+    const distanceNumber = distance.value;
 
     var table = <HTMLTableElement>document.getElementById("label-list");
     for (var i = 0, row: HTMLTableRowElement; row = table.rows[i]; i++)
@@ -249,7 +252,7 @@ async function Save(): Promise<void>
     groups.push({ Name: groupTwo.value, Num: "#2" });
     groups.push({ Name: groupThree.value, Num: "#3" });
 
-    const saveData: ISaveData = { Groups: groups, Labels: labels };
+    const saveData: ISaveData = { Groups: groups, Labels: labels, Distance: distanceNumber };
 
     let markMeta: Metadata = {};
     markMeta[`${Constants.EXTENSIONID}/metadata_marks`] = { saveData };
@@ -271,6 +274,7 @@ async function LoadDefaults(): Promise<void>
     groupOne.value = defaultGroups[0];
     groupTwo.value = defaultGroups[1];
     groupThree.value = defaultGroups[2];
+    distance.value = defaultSpacing;
 
     // Load defaults
     defaultSet.forEach((label) =>
@@ -313,6 +317,16 @@ async function SetupConfigAction(): Promise<void>
     {
         await LoadDefaults();
     }
+
+    ///Setup Distance Configuration
+    distance.max = "999";
+    distance.min = "1";
+    distance.maxLength = 4;
+    distance.value = saveData.Distance ? saveData.Distance : defaultSpacing;
+    distance.oninput = (ev) =>
+    {
+        checkValue(ev.target);
+    };
 
     //Create Save Button
     const saveButton = document.createElement('input');
@@ -362,4 +376,42 @@ async function SetupConfigAction(): Promise<void>
     // Once all loaded, display the extension.
     loadingApp.style.display = "none";
     labelApp.style.display = "";
+
+    // this function will convert a string to an integer
+    // beware this will throw an exception if the value does not parse properly
+    function int(value)
+    {
+        return parseInt(value);
+    }
+    // this checks the value and updates it on the control, if needed
+    function checkValue(sender)
+    {
+        let min = sender.min;
+        let max = sender.max;
+        let value = int(sender.value);
+        if (value > max)
+        {
+            sender.value = max;
+        } 
+        else if (value < min)
+        {
+            sender.value = min;
+        }
+    }
+    function deleteRow(event: MouseEvent): void {
+        event.preventDefault();
+        
+        const row = (event.target as HTMLElement).closest('tr');
+        
+        if (row && window.confirm(`Are you sure you want to delete ${row.children[1].innerHTML}?`)) {
+          row.remove();
+        }
+      }
+      
+      // Assuming you have a table element with the id "myTable"
+      const table = document.getElementById('table-one');
+      
+      if (table) {
+        table.addEventListener('contextmenu', deleteRow);
+      }
 }

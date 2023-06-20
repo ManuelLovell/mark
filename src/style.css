@@ -45,7 +45,14 @@
     float: right;
     padding-right: 5px;
 }
-
+#mainButtonsGroup
+{
+    padding-top: 10px
+}
+#distance
+{
+    width:40px;
+}
 .center {
     text-align: center;
 }

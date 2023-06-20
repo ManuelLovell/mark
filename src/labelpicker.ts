@@ -151,7 +151,7 @@ OBR.onReady(async () =>
 
         target.forEach(async (t) =>
         {
-            await LabelLogic.UpdateLabel(t, label!);
+            await LabelLogic.UpdateLabel(t, label!, saveData.Distance);
         });
     }
 });
