@@ -240,7 +240,7 @@ async function Save(): Promise<void>
         {
             Id: id,
             Active: checkbox.checked ? 1 : 0,
-            Name: name.innerHTML,
+            Name: name.innerText,
             Direction: direction.value,
             Color: hexColor,
             Group: group.value,
