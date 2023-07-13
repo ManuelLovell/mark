@@ -10,6 +10,7 @@ export class LabelLogic
         const labelItemExists = await OBR.scene.items.getItems([comboId]);
         const backgroundColor = "#242424";
         const labelSpacing = parseInt(distance);
+        const labelOpacity = (+opacity / 100);
         // Calculate offset based on DPI for images resizd in the manager
         const dpiOffset = image.grid.dpi / 150;
 
@@ -105,6 +106,8 @@ export class LabelLogic
             // Need offset for consecutive tags per token side
 
             label.style = { backgroundColor: backgroundColor, backgroundOpacity: (+opacity / 100), pointerDirection: pointer, pointerWidth: pointerWidth, pointerHeight: pointerHeight, cornerRadius: 10 };
+            label.text.style.strokeOpacity = labelOpacity;
+            label.text.style.fillOpacity = labelOpacity;
 
             await OBR.scene.items.addItems([label]);
         }
