@@ -4,12 +4,14 @@ import { Constants } from "./constants";
 
 export class LabelLogic
 {
-    static async UpdateLabel(image: Image, labelData: ILabelData, distance: string): Promise<void>
+    static async UpdateLabel(image: Image, labelData: ILabelData, distance: string, opacity: string): Promise<void>
     {
         const comboId = CombineGUIDs(image.id, labelData.Id);
         const labelItemExists = await OBR.scene.items.getItems([comboId]);
         const backgroundColor = "#242424";
         const labelSpacing = parseInt(distance);
+        // Calculate offset based on DPI for images resizd in the manager
+        const dpiOffset = image.grid.dpi / 150;
 
         let placement = 0;
 
@@ -50,12 +52,14 @@ export class LabelLogic
             label.locked = true; // Set Lock, Don't want people to touch
             label.position = { x: image.position.x, y: image.position.y };
             label.metadata = markMeta;
+
             let pointer: any; // Holder for label pointer tail
             let pointerHeight = 15;
             let pointerWidth = 15;
+
             if (labelData.Direction == "Top")
             {
-                label.position.y -= (image.image.height * image.scale.y / 4);
+                label.position.y -= ((image.image.height * image.scale.y / 4) / dpiOffset);
                 pointer = "DOWN";
                 if (brothers.length > 0 && placement !== 0)
                 {
@@ -66,7 +70,7 @@ export class LabelLogic
             }
             if (labelData.Direction == "Bottom")
             {
-                label.position.y += (image.image.height * image.scale.y / 4);
+                label.position.y += ((image.image.height * image.scale.y / 4) / dpiOffset);
                 pointer = "UP";
                 if (brothers.length > 0 && placement !== 0)
                 {
@@ -77,7 +81,7 @@ export class LabelLogic
             }
             if (labelData.Direction == "Right")
             {
-                label.position.x += (image.image.width * image.scale.x / 4);
+                label.position.x += ((image.image.width * image.scale.x / 4) / dpiOffset);
                 pointer = "LEFT";
                 if (brothers.length > 0 && placement !== 0)
                 {
@@ -86,7 +90,7 @@ export class LabelLogic
             }
             if (labelData.Direction == "Left")
             {
-                label.position.x -= (image.image.width * image.scale.x / 4);
+                label.position.x -= ((image.image.width * image.scale.x / 4) / dpiOffset);
                 pointer = "RIGHT";
                 if (brothers.length > 0 && placement !== 0)
                 {
@@ -100,7 +104,7 @@ export class LabelLogic
             }
             // Need offset for consecutive tags per token side
 
-            label.style = { backgroundColor: backgroundColor, backgroundOpacity: .85, pointerDirection: pointer, pointerWidth: pointerWidth, pointerHeight: pointerHeight, cornerRadius: 10 };
+            label.style = { backgroundColor: backgroundColor, backgroundOpacity: (+opacity / 100), pointerDirection: pointer, pointerWidth: pointerWidth, pointerHeight: pointerHeight, cornerRadius: 10 };
 
             await OBR.scene.items.addItems([label]);
         }

@@ -50,7 +50,10 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <input type="text" id="gr3n" name="gr3n" maxlength="15" size="10">
   </div>
   </div>
-  <div id="mainButtonsGroup" class="center"><label for="distance">Label Spacing: </label><input type="number" id="distance" name="distance"><div id="mainButtons"></div></div>
+  <div id="mainButtonsGroup" class="center">
+  <label for="distance">Spacing: </label><input type="number" id="distance" name="distance">
+  <label for="distance">Opacity: </label><input type="number" id="opacity" name="opacity">
+  <div id="mainButtons"></div></div>
   <hr style="height:1px; visibility:hidden;" />
   <table id="table-one" style="width:100%">
   <thead>
@@ -76,6 +79,7 @@ const groupOne = <HTMLInputElement>document.getElementById("gr1n")!;
 const groupTwo = <HTMLInputElement>document.getElementById("gr2n")!;
 const groupThree = <HTMLInputElement>document.getElementById("gr3n")!;
 const distance = <HTMLInputElement>document.getElementById("distance")!;
+const opacity = <HTMLInputElement>document.getElementById("opacity")!;
 
 // Test Data
 const defaultSet: ILabelData[] = [
@@ -99,6 +103,7 @@ const defaultSet: ILabelData[] = [
 ];
 const defaultGroups: string[] = ["Conditions", "Buffs", "Extra"];
 const defaultSpacing = "35";
+const defaultOpacity = "85";
 
 OBR.onReady(async () =>
 {
@@ -225,6 +230,7 @@ async function Save(): Promise<void>
     const labels: ILabelData[] = [];
     const groups: IGroup[] = [];
     const distanceNumber = distance.value;
+    const opacityNumber = opacity.value;
 
     var table = <HTMLTableElement>document.getElementById("label-list");
     for (var i = 0, row: HTMLTableRowElement; row = table.rows[i]; i++)
@@ -252,7 +258,7 @@ async function Save(): Promise<void>
     groups.push({ Name: groupTwo.value, Num: "#2" });
     groups.push({ Name: groupThree.value, Num: "#3" });
 
-    const saveData: ISaveData = { Groups: groups, Labels: labels, Distance: distanceNumber };
+    const saveData: ISaveData = { Groups: groups, Labels: labels, Distance: distanceNumber, Opacity: opacityNumber };
 
     let markMeta: Metadata = {};
     markMeta[`${Constants.EXTENSIONID}/metadata_marks`] = { saveData };
@@ -327,6 +333,16 @@ async function SetupConfigAction(): Promise<void>
     {
         checkValue(ev.target);
     };
+
+      ///Setup Opacity Configuration
+      opacity.max = "99";
+      opacity.min = "1";
+      opacity.maxLength = 2;
+      opacity.value = saveData.Opacity ? saveData.Opacity : defaultOpacity;
+      opacity.oninput = (ev) =>
+      {
+          checkValue(ev.target);
+      };
 
     //Create Save Button
     const saveButton = document.createElement('input');
