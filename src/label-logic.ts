@@ -45,7 +45,7 @@ export class LabelLogic
             let markMeta: Metadata = {};
             markMeta[`${Constants.EXTENSIONID}/place`] = { placement };
 
-            const label = buildLabel().fillColor(labelData.Color).plainText(labelData.Name).fillOpacity(labelOpacity).strokeOpacity(labelOpacity).strokeWidth(5).build();
+            const label = buildLabel().fillColor(labelData.Color).plainText(labelData.Name).fillOpacity(labelOpacity).build();
             label.id = comboId;
             label.type = "LABEL"; // Set Item Type
             label.attachedTo = image.id; // Set Token Attached To
