@@ -45,7 +45,7 @@ export class LabelLogic
             let markMeta: Metadata = {};
             markMeta[`${Constants.EXTENSIONID}/place`] = { placement };
 
-            const label = buildLabel().fillColor(labelData.Color).plainText(labelData.Name).strokeWidth(5).build();
+            const label = buildLabel().fillColor(labelData.Color).plainText(labelData.Name).fillOpacity(labelOpacity).strokeOpacity(labelOpacity).strokeWidth(5).build();
             label.id = comboId;
             label.type = "LABEL"; // Set Item Type
             label.attachedTo = image.id; // Set Token Attached To
@@ -105,9 +105,7 @@ export class LabelLogic
             }
             // Need offset for consecutive tags per token side
 
-            label.style = { backgroundColor: backgroundColor, backgroundOpacity: (+opacity / 100), pointerDirection: pointer, pointerWidth: pointerWidth, pointerHeight: pointerHeight, cornerRadius: 10 };
-            label.text.style.strokeOpacity = labelOpacity;
-            label.text.style.fillOpacity = labelOpacity;
+            label.style = { backgroundColor: backgroundColor, backgroundOpacity: labelOpacity, pointerDirection: pointer, pointerWidth: pointerWidth, pointerHeight: pointerHeight, cornerRadius: 10 };
 
             await OBR.scene.items.addItems([label]);
         }
