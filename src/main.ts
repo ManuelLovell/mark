@@ -57,9 +57,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <hr style="height:1px; visibility:hidden;" />
   <table id="table-one" style="width:100%">
   <thead>
-  <tr>
+  <tr id="tableHeader">
   <th style="width: 5%">🔛</th>
-  <th style="width: 55%">Label Name</th>
+  <th id="labelSort" style="width: 55%">Label Name</th>
   <th style="width: 10%">Group</th>
   <th style="width: 20%">Direction</th>
   <th style="width: 10%">🖍️</th>
@@ -67,12 +67,16 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </thead>
   <tbody id="label-list"></tbody>
   </table>
-  </div>`
+  </div>
+  `
 
 // Table Constants
 const loadingApp = <HTMLDivElement>document.getElementById("loadingApp")!;
 const labelApp = <HTMLDivElement>document.getElementById("labelApp")!;
 const table = <HTMLTableElement>document.getElementById("label-list")!;
+const headerRow = <HTMLTableCellElement>document.getElementById("labelSort")!;
+let sortAscending = true;
+
 // Document Constants
 const mainButtonContainer = <HTMLButtonElement>document.getElementById("mainButtons")!;
 const groupOne = <HTMLInputElement>document.getElementById("gr1n")!;
@@ -136,6 +140,7 @@ OBR.onReady(async () =>
 function AddToGroup(label?: ILabelData)
 {
     const row = table.insertRow(0);
+    row.className = "data-row";
     row.id = GetGUID();
     const checkbox = row.insertCell(0);
     const name = row.insertCell(1);
@@ -258,7 +263,7 @@ async function Save(): Promise<void>
     groups.push({ Name: groupTwo.value, Num: "#2" });
     groups.push({ Name: groupThree.value, Num: "#3" });
 
-    const saveData: ISaveData = { Groups: groups, Labels: labels, Distance: distanceNumber, Opacity: opacityNumber };
+    const saveData: ISaveData = { Groups: groups, Labels: labels.reverse(), Distance: distanceNumber, Opacity: opacityNumber };
 
     let markMeta: Metadata = {};
     markMeta[`${Constants.EXTENSIONID}/metadata_marks`] = { saveData };
@@ -334,15 +339,15 @@ async function SetupConfigAction(): Promise<void>
         checkValue(ev.target);
     };
 
-      ///Setup Opacity Configuration
-      opacity.max = "99";
-      opacity.min = "1";
-      opacity.maxLength = 2;
-      opacity.value = saveData.Opacity ? saveData.Opacity : defaultOpacity;
-      opacity.oninput = (ev) =>
-      {
-          checkValue(ev.target);
-      };
+    ///Setup Opacity Configuration
+    opacity.max = "99";
+    opacity.min = "1";
+    opacity.maxLength = 2;
+    opacity.value = saveData.Opacity ? saveData.Opacity : defaultOpacity;
+    opacity.oninput = (ev) =>
+    {
+        checkValue(ev.target);
+    };
 
     //Create Save Button
     const saveButton = document.createElement('input');
@@ -352,7 +357,7 @@ async function SetupConfigAction(): Promise<void>
     saveButton.onclick = async function () 
     {
         await Save();
-    }
+    };
     saveButton.src = "/save.svg";
     saveButton.title = "Save Changes";
     saveButton.height = 20;
@@ -367,7 +372,7 @@ async function SetupConfigAction(): Promise<void>
     addButton.onclick = async function () 
     {
         await AddToGroup();
-    }
+    };
     addButton.src = "/add.svg";
     addButton.title = "Add Label";
     addButton.height = 20;
@@ -382,12 +387,52 @@ async function SetupConfigAction(): Promise<void>
     resetButton.onclick = async function () 
     {
         await Reset();
-    }
+    };
     resetButton.src = "/reset.svg";
     resetButton.title = "Reset to Default Labels";
     resetButton.height = 20;
     resetButton.width = 20;
     mainButtonContainer.appendChild(resetButton);
+
+    //Setup Sorters
+    headerRow.onclick = async function ()
+    {
+        var table, rows, switching, i, x, y, shouldSwitch;
+        table = document.getElementById("label-list");
+        switching = true;
+    
+        while (switching) {
+          switching = false;
+          rows = table.getElementsByClassName("data-row");
+    
+          for (i = 0; i < rows.length - 1; i++) {
+            shouldSwitch = false;
+            x = rows[i].getElementsByTagName("td")[1];
+            y = rows[i + 1].getElementsByTagName("td")[1];
+    
+            // Compare the values based on the sorting order
+            if (sortAscending) {
+              if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                shouldSwitch = true;
+                break;
+              }
+            } else {
+              if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                shouldSwitch = true;
+                break;
+              }
+            }
+          }
+    
+          if (shouldSwitch) {
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+          }
+        }
+    
+        // Toggle the sorting order for the next click
+        sortAscending = !sortAscending;
+    };
 
     // Once all loaded, display the extension.
     loadingApp.style.display = "none";
@@ -399,6 +444,7 @@ async function SetupConfigAction(): Promise<void>
     {
         return parseInt(value);
     }
+
     // this checks the value and updates it on the control, if needed
     function checkValue(sender)
     {
@@ -408,26 +454,30 @@ async function SetupConfigAction(): Promise<void>
         if (value > max)
         {
             sender.value = max;
-        } 
+        }
         else if (value < min)
         {
             sender.value = min;
         }
     }
-    function deleteRow(event: MouseEvent): void {
+
+    function deleteRow(event: MouseEvent): void
+    {
         event.preventDefault();
-        
+
         const row = (event.target as HTMLElement).closest('tr');
-        
-        if (row && window.confirm(`Are you sure you want to delete ${row.children[1].innerHTML}?`)) {
-          row.remove();
+
+        if (row && row.rowIndex > 0 && window.confirm(`Are you sure you want to delete ${row.children[1].innerHTML}?`))
+        {
+            row.remove();
         }
-      }
-      
-      // Assuming you have a table element with the id "myTable"
-      const table = document.getElementById('table-one');
-      
-      if (table) {
+    }
+
+    // Assuming you have a table element with the id "myTable"
+    const table = document.getElementById('table-one');
+
+    if (table)
+    {
         table.addEventListener('contextmenu', deleteRow);
-      }
+    }
 }

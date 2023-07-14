@@ -36,7 +36,7 @@
         --tooltip-background: rgb(161, 161, 161);
         --OBR-offset-fore: rgb(44, 44, 46);
         --OBR-offset-back: rgb(210, 210, 223);
-        --OBR-dark-blue: rgb(209,210,217);
+        --OBR-dark-blue: rgb(209, 210, 217);
         --OBR-light-blue: rgb(231, 233, 238);
     }
 }
@@ -45,15 +45,16 @@
     float: right;
     padding-right: 5px;
 }
-#mainButtonsGroup
-{
+
+#mainButtonsGroup {
     padding-top: 10px
 }
+
 #distance,
-#opacity
-{
-    width:40px;
+#opacity {
+    width: 40px;
 }
+
 .center {
     text-align: center;
 }
@@ -88,6 +89,14 @@ td {
     border-collapse: collapse;
 }
 
+#labelSort {
+    cursor: pointer;
+}
+
+#labelSort:hover {
+    animation: glowingText 1s infinite alternate;
+}
+
 th,
 td {
     color: var(--font-color);
@@ -108,12 +117,13 @@ td {
     align-items: inital;
     overflow: scroll;
 }
-.highlight
-{
+
+.highlight {
     border-color: red !important;
     border-width: 1px !important;
     border-style: solid !important;
 }
+
 .group1 {
     padding: 5px 5px;
     cursor: pointer;
@@ -155,3 +165,12 @@ td {
 html {
     padding: 2px;
 }
+
+@keyframes glowingText {
+    0% {
+      text-shadow: 0 0 1px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.3), 0 0 20px rgba(0, 188, 212, 0.3), 0 0 30px rgba(0, 188, 212, 0.3), 0 0 40px rgba(0, 188, 212, 0.3), 0 0 55px rgba(0, 188, 212, 0.3);
+    }
+    100% {
+      text-shadow: 0 0 1px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 235, 59, 0.3), 0 0 30px rgba(255, 235, 59, 0.3), 0 0 40px rgba(255, 235, 59, 0.3), 0 0 55px rgba(255, 235, 59, 0.3);
+    }
+  }
