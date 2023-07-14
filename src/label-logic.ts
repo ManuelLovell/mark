@@ -53,6 +53,7 @@ export class LabelLogic
             label.locked = true; // Set Lock, Don't want people to touch
             label.position = { x: image.position.x, y: image.position.y };
             label.metadata = markMeta;
+            label.disableAttachmentBehavior = ["ROTATION", "SCALE"];
 
             let pointer: any; // Holder for label pointer tail
             let pointerHeight = 15;
