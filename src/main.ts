@@ -119,7 +119,7 @@ OBR.onReady(async () =>
     OBR.theme.onChange((theme) =>
     {
         Utilities.SetThemeMode(theme, document);
-    })
+    });
 
     // Add GM CHECK //
     const role = await OBR.player.getRole();
@@ -286,6 +286,7 @@ async function LoadDefaults(): Promise<void>
     groupTwo.value = defaultGroups[1];
     groupThree.value = defaultGroups[2];
     distance.value = defaultSpacing;
+    opacity.value = defaultOpacity;
 
     // Load defaults
     defaultSet.forEach((label) =>
@@ -333,7 +334,7 @@ async function SetupConfigAction(): Promise<void>
     distance.max = "999";
     distance.min = "1";
     distance.maxLength = 4;
-    distance.value = saveData.Distance ? saveData.Distance : defaultSpacing;
+    distance.value = saveData?.Distance ? saveData.Distance : defaultSpacing;
     distance.oninput = (ev) =>
     {
         checkValue(ev.target);
@@ -343,7 +344,7 @@ async function SetupConfigAction(): Promise<void>
     opacity.max = "99";
     opacity.min = "1";
     opacity.maxLength = 2;
-    opacity.value = saveData.Opacity ? saveData.Opacity : defaultOpacity;
+    opacity.value = saveData?.Opacity ? saveData.Opacity : defaultOpacity;
     opacity.oninput = (ev) =>
     {
         checkValue(ev.target);
