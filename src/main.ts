@@ -251,7 +251,7 @@ async function Save(): Promise<void>
         {
             Id: id,
             Active: checkbox.checked ? 1 : 0,
-            Name: name.innerText,
+            Name: name.innerText.trim(),
             Direction: direction.value,
             Color: hexColor,
             Group: group.value,
@@ -474,7 +474,6 @@ async function SetupConfigAction(): Promise<void>
         }
     }
 
-    // Assuming you have a table element with the id "myTable"
     const table = document.getElementById('table-one');
 
     if (table)
