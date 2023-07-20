@@ -1,7 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { Constants } from "./constants";
 
-const ID = "com.tutorial.initiative-tracker";
+const ID = "com.battle-system.mark-menu";
 
 export function setupContextMenu()
 {
