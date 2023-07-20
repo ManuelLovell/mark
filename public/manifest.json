@@ -1,5 +1,6 @@
 {
     "name": "Marked!",
+    "description": "Customizable labeler for tracking of status conditions (or anything else).",
     "version": "1.0.0",
     "author": "Battle-System",
     "icon": "/logo.png",
