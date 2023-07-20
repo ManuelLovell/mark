@@ -7,7 +7,6 @@ export class LabelLogic
     static async UpdateLabel(image: Image, labelData: ILabelData, distance: string, opacity: string): Promise<void>
     {
         const comboId = CombineGUIDs(image.id, labelData.Id);
-        const labelItemExists = await OBR.scene.items.getItems([comboId]);
         const backgroundColor = "#242424";
         const labelSpacing = parseInt(distance);
         const labelOpacity = (+opacity / 100);
@@ -16,12 +15,15 @@ export class LabelLogic
 
         let placement = 0;
 
-        if (labelItemExists.length === 0)
+        const brothers = await OBR.scene.items.getItems<Label>((item: any) =>
+        item.attachedTo === image.id
+        && item.type === "LABEL"
+        && item.style.pointerDirection === GetOppDir(labelData.Direction));
+
+        const labelItemExists = brothers.find(item => item.text.plainText === labelData.Name);
+
+        if (!labelItemExists)
         {
-            const brothers = await OBR.scene.items.getItems<Label>((item: any) =>
-                item.attachedTo === image.id
-                && item.type === "LABEL"
-                && item.style.pointerDirection === GetOppDir(labelData.Direction));
 
             if (brothers.length > 0)
             {
@@ -112,7 +114,7 @@ export class LabelLogic
         }
         else
         {
-            await OBR.scene.items.deleteItems([comboId]);
+            await OBR.scene.items.deleteItems([labelItemExists.id]);
         }
 
         function GetOppDir(direction: string): string
