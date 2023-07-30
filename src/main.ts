@@ -51,7 +51,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </div>
   </div>
   <div id="mainButtonsGroup" class="center">
-  <label for="distance">Spacing: </label><input type="number" id="distance" name="distance">
+  <label for="distance">Font Size: </label><input type="number" id="distance" name="distance">
   <label for="distance">Opacity: </label><input type="number" id="opacity" name="opacity">
   <div id="mainButtons"></div></div>
   <hr style="height:1px; visibility:hidden;" />
@@ -106,7 +106,7 @@ const defaultSet: ILabelData[] = [
     { Id: "17", Name: "Champion 👑", Color: "#FFFFFF", Group: "#3", Direction: "Right", Active: 1 },
 ];
 const defaultGroups: string[] = ["Conditions", "Buffs", "Extra"];
-const defaultSpacing = "35";
+const defaultSpacing = "36"; // This is now font size 
 const defaultOpacity = "85";
 
 OBR.onReady(async () =>

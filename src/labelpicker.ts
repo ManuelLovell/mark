@@ -1,4 +1,4 @@
-import OBR, { Image, Label } from "@owlbear-rodeo/sdk";
+import OBR, { Image, Text } from "@owlbear-rodeo/sdk";
 import { LabelLogic } from "./label-logic";
 import { Constants } from "./constants";
 import * as Utilities from './utilities';
@@ -14,14 +14,14 @@ OBR.onReady(async () =>
     const idParam = urlParams.get('targetid')!;
     const multiParam = urlParams.get('multi');
     const multiIds = multiParam ? idParam.split(",") : [];
-    let attachedLabels: Label[] = [];
+    let attachedLabels: Text[] = [];
 
     const target = await OBR.scene.items.getItems(multiParam ? multiIds : [idParam]) as Image[];
     if (!multiParam)
     {
-        attachedLabels = await OBR.scene.items.getItems<Label>((item: any) =>
+        attachedLabels = await OBR.scene.items.getItems<Text>((item: any) =>
             item.attachedTo === target[0].id
-            && item.type === "LABEL");
+            && item.type === "TEXT");
     }
 
     // Set theme accordingly

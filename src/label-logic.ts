@@ -1,30 +1,33 @@
-import OBR, { Image, Label, Metadata, buildLabel } from "@owlbear-rodeo/sdk";
+import OBR, { Image, Text, Metadata, buildText } from "@owlbear-rodeo/sdk";
 import { CombineGUIDs } from "./utilities";
 import { Constants } from "./constants";
 
 export class LabelLogic
 {
-    static async UpdateLabel(image: Image, labelData: ILabelData, distance: string, opacity: string): Promise<void>
+    static async UpdateLabel(image: Image, labelData: ILabelData, font: string, opacity: string): Promise<void>
     {
         const comboId = CombineGUIDs(image.id, labelData.Id);
-        const backgroundColor = "#242424";
-        const labelSpacing = parseInt(distance);
+        //const backgroundColor = "#242424";
+        const fontSize = parseInt(font);
+        const labelSpacing = fontSize > 48 ? 36 + (fontSize / 3) : 36;
         const labelOpacity = (+opacity / 100);
         // Calculate offset based on DPI for images resizd in the manager
         const dpiOffset = image.grid.dpi / 150;
+        const fontFam = fontSize + "px Roboto";
+        const labelLength = getTextWidth(labelData.Name, fontFam);
+        const labelHeight = getTextHeight(labelData.Name, fontFam);
 
         let placement = 0;
 
-        const brothers = await OBR.scene.items.getItems<Label>((item: any) =>
-        item.attachedTo === image.id
-        && item.type === "LABEL"
-        && item.style.pointerDirection === GetOppDir(labelData.Direction));
+        const brothers = await OBR.scene.items.getItems<Text>((item: any) =>
+            item.attachedTo === image.id
+            && item.type === "TEXT"
+            && item.text.style.fontWeight === GetOppDir(labelData.Direction));
 
         const labelItemExists = brothers.find(item => item.text.plainText === labelData.Name);
 
         if (!labelItemExists)
         {
-
             if (brothers.length > 0)
             {
                 for (let index = 0; index < brothers.length + 1; index++)
@@ -47,46 +50,41 @@ export class LabelLogic
             let markMeta: Metadata = {};
             markMeta[`${Constants.EXTENSIONID}/place`] = { placement };
 
-            const label = buildLabel().fillColor(labelData.Color).plainText(labelData.Name).fillOpacity(labelOpacity).build();
+            const label = buildText().fillColor(labelData.Color).plainText(labelData.Name).fillOpacity(labelOpacity).strokeWidth(1.75).strokeColor("black").strokeOpacity(1).build();
             label.id = comboId;
-            label.type = "LABEL"; // Set Item Type
+            label.type = "TEXT"; // Set Item Type
             label.attachedTo = image.id; // Set Token Attached To
             label.visible = image.visible ? true : false; // Set Visibility
             label.locked = true; // Set Lock, Don't want people to touch
             label.position = { x: image.position.x, y: image.position.y };
             label.metadata = markMeta;
             label.disableAttachmentBehavior = ["ROTATION", "SCALE"];
-
-            let pointer: any; // Holder for label pointer tail
-            let pointerHeight = 15;
-            let pointerWidth = 15;
+            label.text.style.fontWeight = GetOppDir(labelData.Direction);
+            label.text.type = "PLAIN";
+            label.text.style.fontSize = fontSize;
+            label.text.style.textAlign = "CENTER";
 
             if (labelData.Direction == "Top")
             {
-                label.position.y -= ((image.image.height * image.scale.y / 4) / dpiOffset);
-                pointer = "DOWN";
+                label.position.y -= ((image.image.height * image.scale.y / 4) / dpiOffset) + (image.image.height / 4);
                 if (brothers.length > 0 && placement !== 0)
                 {
-                    label.position.y -= 15;
-
                     label.position.y -= (labelSpacing * placement);
                 }
             }
             if (labelData.Direction == "Bottom")
             {
-                label.position.y += ((image.image.height * image.scale.y / 4) / dpiOffset);
-                pointer = "UP";
+                label.position.y -= ((image.image.height * image.scale.y / 4) / dpiOffset) - (image.image.height / 4);
+                label.position.x -= labelLength;
                 if (brothers.length > 0 && placement !== 0)
                 {
-                    label.position.y += 15;
-
                     label.position.y += (labelSpacing * placement);
                 }
             }
             if (labelData.Direction == "Right")
             {
                 label.position.x += ((image.image.width * image.scale.x / 4) / dpiOffset);
-                pointer = "LEFT";
+                label.position.y -= labelHeight / 2;
                 if (brothers.length > 0 && placement !== 0)
                 {
                     label.position.y += (labelSpacing * placement);
@@ -95,21 +93,14 @@ export class LabelLogic
             if (labelData.Direction == "Left")
             {
                 label.position.x -= ((image.image.width * image.scale.x / 4) / dpiOffset);
-                pointer = "RIGHT";
+                label.position.x -= labelLength;
+                label.position.y -= labelHeight / 2;
                 if (brothers.length > 0 && placement !== 0)
                 {
-                    label.position.y -= (labelSpacing  * placement);
+                    label.position.y -= (labelSpacing * placement);
                 }
             }
-            if (brothers.length > 0 && placement !== 0)
-            {
-                pointerHeight = 0;
-                pointerWidth = 0;
-            }
             // Need offset for consecutive tags per token side
-
-            label.style = { backgroundColor: backgroundColor, backgroundOpacity: labelOpacity, pointerDirection: pointer, pointerWidth: pointerWidth, pointerHeight: pointerHeight, cornerRadius: 10 };
-
             await OBR.scene.items.addItems([label]);
         }
         else
@@ -117,21 +108,50 @@ export class LabelLogic
             await OBR.scene.items.deleteItems([labelItemExists.id]);
         }
 
-        function GetOppDir(direction: string): string
+        function GetOppDir(direction: string): number
         {
             switch (direction)
             {
                 case 'Top':
-                    return 'DOWN';
+                    return 601;
                 case 'Bottom':
-                    return 'UP';
+                    return 602;
                 case 'Right':
-                    return 'LEFT';
+                    return 603;
                 case 'Left':
-                    return 'RIGHT';
+                    return 604;
                 default:
                     throw new Error('Invalid direction');
             }
         }
+
+        function getTextWidth(text: string, fontSize: string): number
+        {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            if (!ctx)
+            {
+                throw new Error("Canvas 2D context is not supported.");
+            }
+
+            ctx.font = fontSize;
+            const textMetrics = ctx.measureText(text);
+            return textMetrics.width;
+        }
+
+        function getTextHeight(text: string, fontSize: string): number {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+          
+            if (!ctx) {
+              throw new Error("Canvas 2D context is not supported.");
+            }
+          
+            ctx.font = fontSize;
+            const textMetrics = ctx.measureText(text);
+            const height = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+            return height;
+          }
     }
 }
