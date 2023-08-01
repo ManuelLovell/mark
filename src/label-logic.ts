@@ -12,7 +12,8 @@ export class LabelLogic
         const labelSpacing = fontSize > 48 ? 36 + (fontSize / 3) : 36;
         const labelOpacity = (+opacity / 100);
         // Calculate offset based on DPI for images resizd in the manager
-        const dpiOffset = image.grid.dpi / 150;
+        const dpiOffsetX = (image.grid.offset.x / image.grid.dpi) / 2;
+        const dpiOffsetY = (image.grid.offset.y / image.grid.dpi) / 2;
         const fontFam = fontSize + "px Roboto";
         const labelLength = getTextWidth(labelData.Name, fontFam);
         const labelHeight = getTextHeight(labelData.Name, fontFam);
@@ -66,7 +67,8 @@ export class LabelLogic
 
             if (labelData.Direction == "Top")
             {
-                label.position.y -= ((image.image.height * image.scale.y / 4) / dpiOffset) + (image.image.height / 4);
+                label.position.y -= ((image.image.height * image.scale.y) * dpiOffsetY);
+                label.position.y += labelHeight; // move it further based on label height
                 if (brothers.length > 0 && placement !== 0)
                 {
                     label.position.y -= (labelSpacing * placement);
@@ -74,7 +76,7 @@ export class LabelLogic
             }
             if (labelData.Direction == "Bottom")
             {
-                label.position.y -= ((image.image.height * image.scale.y / 4) / dpiOffset) - (image.image.height / 4);
+                label.position.y += (((image.image.height / 2) * image.scale.y) * dpiOffsetY);
                 label.position.x -= labelLength;
                 if (brothers.length > 0 && placement !== 0)
                 {
@@ -83,7 +85,7 @@ export class LabelLogic
             }
             if (labelData.Direction == "Right")
             {
-                label.position.x += ((image.image.width * image.scale.x / 4) / dpiOffset);
+                label.position.x += (((image.image.width / 2) * image.scale.x) * dpiOffsetX);
                 label.position.y -= labelHeight / 2;
                 if (brothers.length > 0 && placement !== 0)
                 {
@@ -92,8 +94,8 @@ export class LabelLogic
             }
             if (labelData.Direction == "Left")
             {
-                label.position.x -= ((image.image.width * image.scale.x / 4) / dpiOffset);
-                label.position.x -= labelLength;
+                label.position.x -= (((image.image.width / 2) * image.scale.x) * dpiOffsetX);
+                label.position.x -= labelLength; // Move it to the left further based on label length
                 label.position.y -= labelHeight / 2;
                 if (brothers.length > 0 && placement !== 0)
                 {
