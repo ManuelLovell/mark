@@ -12,9 +12,9 @@ export function setupContextMenu()
                 icon: "/tag1.svg",
                 label: "Mark It",
                 filter: {
-                    every: [
-                        { key: "layer", value: "CHARACTER" },
-                    ],
+                    some: [
+                        { key: "layer", value: "CHARACTER", coordinator: "||" },
+                        { key: "layer", value: "MOUNT" }],
                 },
             },
         ],

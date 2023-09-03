@@ -36,6 +36,7 @@ Coloris.close();
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div id="loadingApp" class="center">Loading...</div>
   <div id="labelApp" style="display:none;">
+  <div id="bannerText"></div>
   <div id="buttonLabels">
   <div class="nameGroup center">
   <label for="gr1n">Group #1</label><br>
@@ -69,6 +70,38 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </table>
   </div>
   `
+///Scrolling News
+const textArray = [
+    "Marked! v1.1",
+    "Mounts are now markable."];
+let currentIndex = 0;
+const textContainer = document.getElementById("bannerText")!;
+
+function fadeOut()
+{
+    textContainer.style.opacity = "0";
+    setTimeout(() =>
+    {
+        fadeIn();
+    }, 2000); // Fade-out time is 2 seconds
+}
+
+function fadeIn()
+{
+    currentIndex = (currentIndex + 1) % textArray.length;
+    textContainer.textContent = textArray[currentIndex];
+    textContainer.style.opacity = "1";
+    setTimeout(() =>
+    {
+        fadeOut();
+    }, 10000); // Fade-in time is 2 seconds
+}
+///Scrolling News
+
+// Initial display
+textContainer.textContent = textArray[currentIndex];
+fadeIn();
+
 
 // Table Constants
 const loadingApp = <HTMLDivElement>document.getElementById("loadingApp")!;
@@ -401,36 +434,43 @@ async function SetupConfigAction(): Promise<void>
         var table, rows, switching, i, x, y, shouldSwitch;
         table = document.getElementById("label-list");
         switching = true;
-    
-        while (switching) {
-          switching = false;
-          rows = table.getElementsByClassName("data-row");
-    
-          for (i = 0; i < rows.length - 1; i++) {
-            shouldSwitch = false;
-            x = rows[i].getElementsByTagName("td")[1];
-            y = rows[i + 1].getElementsByTagName("td")[1];
-    
-            // Compare the values based on the sorting order
-            if (sortAscending) {
-              if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                shouldSwitch = true;
-                break;
-              }
-            } else {
-              if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                shouldSwitch = true;
-                break;
-              }
+
+        while (switching)
+        {
+            switching = false;
+            rows = table.getElementsByClassName("data-row");
+
+            for (i = 0; i < rows.length - 1; i++)
+            {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("td")[1];
+                y = rows[i + 1].getElementsByTagName("td")[1];
+
+                // Compare the values based on the sorting order
+                if (sortAscending)
+                {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase())
+                    {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else
+                {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase())
+                    {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
             }
-          }
-    
-          if (shouldSwitch) {
-            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-            switching = true;
-          }
+
+            if (shouldSwitch)
+            {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+            }
         }
-    
+
         // Toggle the sorting order for the next click
         sortAscending = !sortAscending;
     };

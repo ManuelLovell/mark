@@ -22,6 +22,7 @@
     --OBR-offset-back: rgb(49, 49, 65);
     --OBR-dark-blue: rgb(30, 34, 49);
     --OBR-light-blue: rgb(60, 62, 75);
+    --OBR-Purple-Select: rgb(187, 153, 255, 0.5);
 
     --BS-red: #A73335;
 }
@@ -166,11 +167,21 @@ html {
     padding: 2px;
 }
 
+#bannerText {
+    font-size: 18px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+    font-style: italic;
+    background: linear-gradient(to right, transparent 0%, var(--OBR-Purple-Select) 50%, transparent 100%);
+}
+
 @keyframes glowingText {
     0% {
-      text-shadow: 0 0 1px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.3), 0 0 20px rgba(0, 188, 212, 0.3), 0 0 30px rgba(0, 188, 212, 0.3), 0 0 40px rgba(0, 188, 212, 0.3), 0 0 55px rgba(0, 188, 212, 0.3);
+        text-shadow: 0 0 1px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.3), 0 0 20px rgba(0, 188, 212, 0.3), 0 0 30px rgba(0, 188, 212, 0.3), 0 0 40px rgba(0, 188, 212, 0.3), 0 0 55px rgba(0, 188, 212, 0.3);
     }
+
     100% {
-      text-shadow: 0 0 1px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 235, 59, 0.3), 0 0 30px rgba(255, 235, 59, 0.3), 0 0 40px rgba(255, 235, 59, 0.3), 0 0 55px rgba(255, 235, 59, 0.3);
+        text-shadow: 0 0 1px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 235, 59, 0.3), 0 0 30px rgba(255, 235, 59, 0.3), 0 0 40px rgba(255, 235, 59, 0.3), 0 0 55px rgba(255, 235, 59, 0.3);
     }
-  }
+}
