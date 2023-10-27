@@ -52,7 +52,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </div>
   </div>
   <div id="mainButtonsGroup" class="center">
-  <label for="distance">Font Size: </label><input type="number" id="distance" name="distance">
+  <label for="distance">Size: </label><input type="number" id="distance" name="distance">
   <label for="distance">Opacity: </label><input type="number" id="opacity" name="opacity">
   <div id="mainButtons"></div></div>
   <hr style="height:1px; visibility:hidden;" />
@@ -72,8 +72,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   `
 ///Scrolling News
 const textArray = [
-    "Marked! v1.1",
-    "Mounts are now markable."];
+    "Marked! v1.2",
+    "Added Import/Export"];
 let currentIndex = 0;
 const textContainer = document.getElementById("bannerText")!;
 
@@ -262,8 +262,63 @@ function CreateGroupDropDown(): HTMLSelectElement
     return selector;
 }
 
+async function ExportData(): Promise<void>
+{
+    const content = GetSaveData();
+
+    var a = document.createElement("a");
+    var file = new Blob([JSON.stringify(content)], { type: "text/plain" });
+    a.href = URL.createObjectURL(file);
+    a.download = `MarkedExport-${Date.now()}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+async function ImportData(saveData: ISaveData): Promise<void>
+{
+    if (saveData && saveData.Labels?.length > 0)
+    {
+        const labelTable = document.getElementById("label-list")!;
+        labelTable.innerHTML = "";
+        saveData.Labels.forEach((label) =>
+        {
+            AddToGroup(label);
+        });
+        saveData.Groups.forEach((group) =>
+        {
+            switch (group.Num)
+            {
+                case '#1':
+                    groupOne.value = group.Name;
+                    break;
+                case '#2':
+                    groupTwo.value = group.Name;
+                    break;
+                case '#3':
+                    groupThree.value = group.Name;
+                    break;
+                default:
+                    throw new Error('Invalid Group');
+            }
+        });
+        distance.value = saveData.Distance;
+        opacity.value = saveData.Opacity;
+    }
+    await Save();
+}
+
 /** Save the current label setup to room metadata */
 async function Save(): Promise<void>
+{
+    const saveData = GetSaveData();
+
+    let markMeta: Metadata = {};
+    markMeta[`${Constants.EXTENSIONID}/metadata_marks`] = { saveData };
+    await OBR.room.setMetadata(markMeta);
+}
+
+function GetSaveData(): ISaveData
 {
     const labels: ILabelData[] = [];
     const groups: IGroup[] = [];
@@ -296,11 +351,7 @@ async function Save(): Promise<void>
     groups.push({ Name: groupTwo.value, Num: "#2" });
     groups.push({ Name: groupThree.value, Num: "#3" });
 
-    const saveData: ISaveData = { Groups: groups, Labels: labels.reverse(), Distance: distanceNumber, Opacity: opacityNumber };
-
-    let markMeta: Metadata = {};
-    markMeta[`${Constants.EXTENSIONID}/metadata_marks`] = { saveData };
-    await OBR.room.setMetadata(markMeta);
+    return { Groups: groups, Labels: labels.reverse(), Distance: distanceNumber, Opacity: opacityNumber };
 }
 
 /**Set the metadata back to defaults */
@@ -382,6 +433,76 @@ async function SetupConfigAction(): Promise<void>
     {
         checkValue(ev.target);
     };
+
+    //Create Export Button
+    const exportButton = document.createElement('input');
+    exportButton.type = "image";
+    exportButton.className = "Icon clickable";
+    exportButton.id = "exportButton";
+    exportButton.onclick = async function () 
+    {
+        await ExportData();
+    };
+    exportButton.src = "/export.svg";
+    exportButton.title = "Export Data";
+    exportButton.height = 20;
+    exportButton.width = 20;
+    mainButtonContainer.appendChild(exportButton);
+
+    //Create Import Button
+    const importButton = document.createElement('input');
+    importButton.type = "image";
+    importButton.className = "Icon clickable";
+    importButton.id = "importButton";
+    importButton.onclick = async function () 
+    {
+        document.getElementById("fileButton")!.click();
+    };
+    importButton.src = "/import.svg";
+    importButton.title = "Import Data";
+    importButton.height = 20;
+    importButton.width = 20;
+    mainButtonContainer.appendChild(importButton);
+
+    const fileButton = document.createElement('input');
+    fileButton.type = "file";
+    fileButton.id = "fileButton";
+    fileButton.title = "Choose a file to import"
+    fileButton.className = "tinyType";
+    fileButton.hidden = true;
+    fileButton.onchange = async function ()
+    {
+        console.log('FILE ADDED');
+
+        if (fileButton.files && fileButton.files.length > 0)
+        {
+            let file = fileButton.files[0];
+            let reader = new FileReader();
+
+            reader.readAsText(file);
+
+            reader.onload = async function ()
+            {
+                try
+                {
+                    const saveData: ISaveData = JSON.parse(reader.result as string);
+                    await ImportData(saveData);
+                    OBR.notification.show("Import Complete!", "SUCCESS");
+                }
+                catch (error) 
+                {
+                    OBR.notification.show(`The import failed - ${error}`, "ERROR");
+                }
+            };
+
+            reader.onerror = function ()
+            {
+                console.log(reader.error);
+            };
+        }
+    }
+    mainButtonContainer.appendChild(fileButton);
+
 
     //Create Save Button
     const saveButton = document.createElement('input');
