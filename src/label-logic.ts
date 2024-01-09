@@ -1,19 +1,20 @@
 import OBR, { Image, Text, Metadata, buildText } from "@owlbear-rodeo/sdk";
-import { CombineGUIDs } from "./utilities";
+import { CombineGUIDs, GetImageBounds } from "./utilities";
 import { Constants } from "./constants";
 
 export class LabelLogic
 {
     static async UpdateLabel(image: Image, labelData: ILabelData, font: string, opacity: string): Promise<void>
     {
+        const GRIDDPI = await OBR.scene.grid.getDpi();
+        const bounds = GetImageBounds(image, GRIDDPI);
+
         const comboId = CombineGUIDs(image.id, labelData.Id);
         //const backgroundColor = "#242424";
         const fontSize = parseInt(font);
         const labelSpacing = fontSize > 48 ? 36 + (fontSize / 3) : 36;
         const labelOpacity = (+opacity / 100);
         // Calculate offset based on DPI for images resizd in the manager
-        const dpiOffsetX = (image.grid.offset.x / image.grid.dpi) / 2;
-        const dpiOffsetY = (image.grid.offset.y / image.grid.dpi) / 2;
         const fontFam = fontSize + "px Roboto";
         const labelLength = getTextWidth(labelData.Name, fontFam);
         const labelHeight = getTextHeight(labelData.Name, fontFam);
@@ -50,9 +51,9 @@ export class LabelLogic
 
             let markMeta: Metadata = {};
             markMeta[`${Constants.EXTENSIONID}/place`] = { placement };
+            markMeta[`${Constants.EXTENSIONID}/comboid`] = comboId;
 
             const label = buildText().fillColor(labelData.Color).plainText(labelData.Name).fillOpacity(labelOpacity).strokeWidth(1.75).strokeColor("black").strokeOpacity(1).build();
-            label.id = comboId;
             label.type = "TEXT"; // Set Item Type
             label.attachedTo = image.id; // Set Token Attached To
             label.visible = image.visible ? true : false; // Set Visibility
@@ -67,8 +68,8 @@ export class LabelLogic
 
             if (labelData.Direction == "Top")
             {
-                label.position.y -= ((image.image.height * image.scale.y) * dpiOffsetY);
-                label.position.y += labelHeight; // move it further based on label height
+                label.position.y = bounds.min.y;
+                label.position.y -= labelHeight; // move it further based on label height
                 if (brothers.length > 0 && placement !== 0)
                 {
                     label.position.y -= (labelSpacing * placement);
@@ -76,7 +77,7 @@ export class LabelLogic
             }
             if (labelData.Direction == "Bottom")
             {
-                label.position.y += (((image.image.height / 2) * image.scale.y) * dpiOffsetY);
+                label.position.y = bounds.max.y - (labelHeight / 2);
                 label.position.x -= labelLength;
                 if (brothers.length > 0 && placement !== 0)
                 {
@@ -85,7 +86,7 @@ export class LabelLogic
             }
             if (labelData.Direction == "Right")
             {
-                label.position.x += (((image.image.width / 2) * image.scale.x) * dpiOffsetX);
+                label.position.x = bounds.max.x;
                 label.position.y -= labelHeight / 2;
                 if (brothers.length > 0 && placement !== 0)
                 {
@@ -94,7 +95,7 @@ export class LabelLogic
             }
             if (labelData.Direction == "Left")
             {
-                label.position.x -= (((image.image.width / 2) * image.scale.x) * dpiOffsetX);
+                label.position.x = bounds.min.x;
                 label.position.x -= labelLength; // Move it to the left further based on label length
                 label.position.y -= labelHeight / 2;
                 if (brothers.length > 0 && placement !== 0)
@@ -142,18 +143,20 @@ export class LabelLogic
             return textMetrics.width;
         }
 
-        function getTextHeight(text: string, fontSize: string): number {
+        function getTextHeight(text: string, fontSize: string): number
+        {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-          
-            if (!ctx) {
-              throw new Error("Canvas 2D context is not supported.");
+
+            if (!ctx)
+            {
+                throw new Error("Canvas 2D context is not supported.");
             }
-          
+
             ctx.font = fontSize;
             const textMetrics = ctx.measureText(text);
             const height = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
             return height;
-          }
+        }
     }
 }

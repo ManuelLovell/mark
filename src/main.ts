@@ -36,7 +36,7 @@ Coloris.close();
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div id="loadingApp" class="center">Loading...</div>
   <div id="labelApp" style="display:none;">
-  <div id="bannerText"></div>
+  <div style="display:flex;"><div id="bannerText"></div><div id="whatsNew"></div></div>
   <div id="buttonLabels">
   <div class="nameGroup center">
   <label for="gr1n">Group #1</label><br>
@@ -72,10 +72,16 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   `
 ///Scrolling News
 const textArray = [
-    "Marked! v1.2",
-    "Added Import/Export"];
+    "Added Import/Export",
+    "Marked! v1.3",
+    "Updated Positioning for various Scaling",
+    "Added ContextMenu for faster Marking"
+];
+
 let currentIndex = 0;
 const textContainer = document.getElementById("bannerText")!;
+const whatsNewContainer = document.getElementById("whatsNew")!;
+whatsNewContainer.appendChild(Utilities.GetWhatsNewButton());
 
 function fadeOut()
 {

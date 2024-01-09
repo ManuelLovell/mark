@@ -1,4 +1,5 @@
-import { Theme } from "@owlbear-rodeo/sdk";
+import OBR, { Image, Theme } from "@owlbear-rodeo/sdk";
+import { Constants } from "./constants";
 
 export function GetGUID(): string
 {
@@ -138,4 +139,57 @@ export function HexToRgb(hex: string): string | undefined
 export function RgbToHex(rgb): string | undefined
 {
     return `#${rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/).slice(1).map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('')}`;
+}
+
+export function GetImageBounds(item: Image, dpi: any)
+{
+    const dpiScale = dpi / item.grid.dpi;
+    const width = item.image.width * dpiScale * item.scale.x;
+    const height = item.image.height * dpiScale * item.scale.y;
+    const offsetX = (item.grid.offset.x / item.image.width) * width;
+    const offsetY = (item.grid.offset.y / item.image.height) * height;
+    const min = {
+        x: item.position.x - offsetX,
+        y: item.position.y - offsetY,
+    };
+    const max = { x: min.x + width, y: min.y + height };
+    return { min, max };
+}
+
+export function GetWhatsNewButton()
+{
+    const newImgElement = document.createElement('img');
+    newImgElement.id = "whatsNewButton";
+    newImgElement.setAttribute('class', 'icon');
+    newImgElement.classList.add('clickable');
+    newImgElement.setAttribute('title', 'Whats New?');
+    newImgElement.setAttribute('src', '/info.svg');
+    newImgElement.onclick = async function ()
+    {
+        try
+        {
+            localStorage.setItem(Constants.VERSION, "true");
+            newImgElement.classList.remove('whats-new-shine');
+        } catch (error)
+        {
+            // Oh well.
+        }
+        await OBR.modal.open({
+            id: Constants.EXTENSIONWHATSNEW,
+            url: `/whatsnew.html`,
+            height: 500,
+            width: 350,
+        });
+    };
+
+    try
+    {
+        const glow = localStorage.getItem(Constants.VERSION);
+        if (glow !== "true") newImgElement.classList.add('whats-new-shine');
+    } catch (error)
+    {
+        // Oh well.
+    }
+
+    return newImgElement;
 }

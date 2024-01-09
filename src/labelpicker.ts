@@ -8,16 +8,17 @@ import './style.css'
 OBR.onReady(async () =>
 {
     document.documentElement.style.borderRadius = "16px";
-    document.documentElement.style.height = "100%";
+    document.documentElement.style.height = "100%";    
+    
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
-    const idParam = urlParams.get('targetid')!;
-    const multiParam = urlParams.get('multi');
-    const multiIds = multiParam ? idParam.split(",") : [];
-    let attachedLabels: Text[] = [];
+    const contextmenu = urlParams.get('contextmenu')!;
 
-    const target = await OBR.scene.items.getItems(multiParam ? multiIds : [idParam]) as Image[];
-    if (!multiParam)
+    let attachedLabels: Text[] = [];
+    const selected = await OBR.player.getSelection();
+    const target = await OBR.scene.items.getItems(selected) as Image[];
+
+    if (selected?.length === 1)
     {
         attachedLabels = await OBR.scene.items.getItems<Text>((item: any) =>
             item.attachedTo === target[0].id
@@ -54,6 +55,18 @@ OBR.onReady(async () =>
         footerContainer.appendChild(categoryOne);
         footerContainer.appendChild(categoryTwo);
         footerContainer.appendChild(categoryThree);
+
+        if (contextmenu)
+        {
+            list1.classList.remove("btn-group");
+            list1.classList.add("context-btn-group");
+            
+            list2.classList.remove("btn-group");
+            list2.classList.add("context-btn-group");
+            
+            list3.classList.remove("btn-group");
+            list3.classList.add("context-btn-group");
+        }
 
         saveData.Groups.forEach((group) =>
         {
@@ -144,7 +157,7 @@ OBR.onReady(async () =>
         const cleanedId = elem.id.substring(7);
         const label = saveData.Labels.find(label => label.Id === cleanedId);
 
-        if (!multiParam)
+        if (selected?.length === 1)
         {
             elem.className = elem.className === "group1" ? "group1 highlight" : "group1";
         }

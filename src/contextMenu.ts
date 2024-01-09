@@ -24,7 +24,7 @@ export function setupContextMenu()
             {
                 await OBR.popover.open({
                     id: Constants.LABELSID,
-                    url: `/labelpicker.html?targetid=${context.items[0].id}`,
+                    url: `/labelpicker.html`,
                     height: 250,
                     width: 300,
                     anchorElementId: elementId
@@ -34,12 +34,13 @@ export function setupContextMenu()
             {
                 await OBR.popover.open({
                     id: Constants.LABELSID,
-                    url: `/labelpicker.html?targetid=${context.items.map(item => item.id).toString()}&multi=true`,
+                    url: `/labelpicker.html`,
                     height: 250,
                     width: 300,
                     anchorElementId: elementId
                 });
             }
         },
+        embed: { url: `/labelpicker.html?contextmenu=true`, height: 200 }
     });
 }
