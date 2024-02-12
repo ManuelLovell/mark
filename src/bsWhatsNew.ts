@@ -8,6 +8,10 @@ const footer = document.querySelector<HTMLElement>('#clash-whatsnew-notes')!;
 
 whatsnew.innerHTML = `
   <div id="newsContainer">
+    <h1>Marked! 2/11</h1>
+    Finally decided to just coding in the nameplates by hand.
+    </br> I know a lot of people weren't thrilled by the change to without them, so hopefully this gets the best of both worlds.
+    </br> Open to feedback if you find anything funky!
     <h1>Marked! 1/8</h1>
     Getting some uniformity between things.
     </br>

@@ -72,10 +72,10 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   `
 ///Scrolling News
 const textArray = [
-    "Added Import/Export",
-    "Marked! v1.3",
+    "Added ContextMenu for faster Marking",
+    "Marked! v1.4",
+    "Nameplates are back!",
     "Updated Positioning for various Scaling",
-    "Added ContextMenu for faster Marking"
 ];
 
 let currentIndex = 0;
