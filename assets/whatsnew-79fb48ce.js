@@ -1,5 +1,9 @@
-import{O as e,C as o}from"./constants-e2306cdc.js";const s=document.querySelector("#clash-whatsnew"),a=document.querySelector("#clash-whatsnew-notes");s.innerHTML=`
+import{O as e,C as o}from"./constants-0d22035a.js";const s=document.querySelector("#clash-whatsnew"),n=document.querySelector("#clash-whatsnew-notes");s.innerHTML=`
   <div id="newsContainer">
+    <h1>Marked! 2/11</h1>
+    Finally decided to just coding in the nameplates by hand.
+    </br> I know a lot of people weren't thrilled by the change to without them, so hopefully this gets the best of both worlds.
+    </br> Open to feedback if you find anything funky!
     <h1>Marked! 1/8</h1>
     Getting some uniformity between things.
     </br>
@@ -13,7 +17,7 @@ import{O as e,C as o}from"./constants-e2306cdc.js";const s=document.querySelecto
     </br>
     </br>
   </div>
-`;e.onReady(async()=>{a.innerHTML=`
+`;e.onReady(async()=>{n.innerHTML=`
     <a href="https://www.patreon.com/battlesystem" target="_blank">Patreon!</a>
     <a href="https://discord.gg/ANZKDmWzr6" target="_blank">Join the OBR Discord!</a>
     <div class="close"><img style="height:40px; width:40px;" src="/close-button.svg"</div>`;const t=document.querySelector(".close");t.onclick=async()=>{await e.modal.close(o.EXTENSIONWHATSNEW)}});
