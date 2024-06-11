@@ -1,4 +1,4 @@
-import{O as e,C as o}from"./constants-0d22035a.js";const s=document.querySelector("#clash-whatsnew"),n=document.querySelector("#clash-whatsnew-notes");s.innerHTML=`
+import{O as e,C as o}from"./constants-b5d00f0a.js";const s=document.querySelector("#clash-whatsnew"),n=document.querySelector("#clash-whatsnew-notes");s.innerHTML=`
   <div id="newsContainer">
     <h1>Marked! 2/11</h1>
     Finally decided to just coding in the nameplates by hand.
