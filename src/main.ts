@@ -36,38 +36,41 @@ Coloris.close();
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div id="loadingApp" class="center">Loading...</div>
   <div id="labelApp" style="display:none;">
-  <div style="display:flex;"><div id="bannerText"></div><div id="whatsNew"></div></div>
-  <div id="buttonLabels">
-  <div class="nameGroup center">
-  <label for="gr1n">Group #1</label><br>
-  <input type="text" id="gr1n" name="gr1n" maxlength="15" size="10">
-  </div>
-  <div class="nameGroup center">
-  <label for="gr2n">Group #2</label><br>
-  <input type="text" id="gr2n" name="gr2n" maxlength="15" size="10">
-  </div>
-  <div class="nameGroup center">
-  <label for="gr3n">Group #3</label><br>
-  <input type="text" id="gr3n" name="gr3n" maxlength="15" size="10">
-  </div>
-  </div>
-  <div id="mainButtonsGroup" class="center">
-  <label for="distance">Size: </label><input type="number" id="distance" name="distance">
-  <label for="distance">Opacity: </label><input type="number" id="opacity" name="opacity">
-  <div id="mainButtons"></div></div>
-  <hr style="height:1px; visibility:hidden;" />
-  <table id="table-one" style="width:100%">
-  <thead>
-  <tr id="tableHeader">
-  <th style="width: 5%">🔛</th>
-  <th id="labelSort" style="width: 55%">Label Name</th>
-  <th style="width: 10%">Group</th>
-  <th style="width: 20%">Direction</th>
-  <th style="width: 10%">🖍️</th>
-  </tr>
-  </thead>
-  <tbody id="label-list"></tbody>
-  </table>
+    <div id="controlContainer">
+        <div style="display:flex;"><div id="bannerText"></div><div id="whatsNew"></div></div>
+        <div id="buttonLabels">
+        <div class="nameGroup center">
+        <label for="gr1n">Group #1</label><br>
+        <input type="text" id="gr1n" name="gr1n" maxlength="15" size="10">
+        </div>
+        <div class="nameGroup center">
+        <label for="gr2n">Group #2</label><br>
+        <input type="text" id="gr2n" name="gr2n" maxlength="15" size="10">
+        </div>
+        <div class="nameGroup center">
+        <label for="gr3n">Group #3</label><br>
+        <input type="text" id="gr3n" name="gr3n" maxlength="15" size="10">
+        </div>
+        </div>
+        <div id="mainButtonsGroup" class="center">
+        <label for="distance">Size: </label><input type="number" id="distance" name="distance">
+        <label for="distance">Opacity: </label><input type="number" id="opacity" name="opacity">
+        <div id="mainButtons"></div></div>
+    </div>
+    <div id="tableContainer">
+        <table id="table-one" style="width:100%">
+        <thead>
+        <tr id="tableHeader">
+        <th style="width: 5%">🔛</th>
+        <th id="labelSort" style="width: 55%">Label Name</th>
+        <th style="width: 10%">Group</th>
+        <th style="width: 20%">Direction</th>
+        <th style="width: 10%">🖍️</th>
+        </tr>
+        </thead>
+        <tbody id="label-list"></tbody>
+        </table>
+    </div>
   </div>
   `
 ///Scrolling News

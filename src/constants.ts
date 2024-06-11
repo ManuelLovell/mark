@@ -2,7 +2,7 @@ export class Constants
 {
     static EXTENSIONID = "com.battle-system.mark";
     static EXTENSIONWHATSNEW = "com.battle-system.mark-whatsnew";
-    static VERSION = "whatsnew-mark-140";
+    static VERSION = "whatsnew-mark-141";
 
     static LABELSID = "com.battle-system.labels";
     static DICENOTATION = /(\d+)[dD](\d+)(.*)$/i;
