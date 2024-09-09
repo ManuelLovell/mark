@@ -6,8 +6,7 @@ export default {
         rollupOptions: {
             input: {
                 main: path.resolve(__dirname, "index.html"),
-                labelpicker: path.resolve(__dirname, "labelpicker.html"),
-                whatsnew: path.resolve(__dirname, 'whatsnew.html'),
+                labelpicker: path.resolve(__dirname, "labelpicker.html")
             }
         }
     }

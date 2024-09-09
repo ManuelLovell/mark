@@ -37,7 +37,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div id="loadingApp" class="center">Loading...</div>
   <div id="labelApp" style="display:none;">
     <div id="controlContainer">
-        <div style="display:flex;"><div id="bannerText"></div><div id="whatsNew"></div></div>
+        <div style="display:flex;"><div id="bannerText">Marked!</div><div id="patreonContainer"></div></div>
         <div id="buttonLabels">
         <div class="nameGroup center">
         <label for="gr1n">Group #1</label><br>
@@ -72,45 +72,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         </table>
     </div>
   </div>
-  `
-///Scrolling News
-const textArray = [
-    "Added ContextMenu for faster Marking",
-    "Marked! v1.4",
-    "Nameplates are back!",
-    "Updated Positioning for various Scaling",
-];
-
-let currentIndex = 0;
-const textContainer = document.getElementById("bannerText")!;
-const whatsNewContainer = document.getElementById("whatsNew")!;
-whatsNewContainer.appendChild(Utilities.GetWhatsNewButton());
-
-function fadeOut()
-{
-    textContainer.style.opacity = "0";
-    setTimeout(() =>
-    {
-        fadeIn();
-    }, 2000); // Fade-out time is 2 seconds
-}
-
-function fadeIn()
-{
-    currentIndex = (currentIndex + 1) % textArray.length;
-    textContainer.textContent = textArray[currentIndex];
-    textContainer.style.opacity = "1";
-    setTimeout(() =>
-    {
-        fadeOut();
-    }, 10000); // Fade-in time is 2 seconds
-}
-///Scrolling News
-
-// Initial display
-textContainer.textContent = textArray[currentIndex];
-fadeIn();
-
+  `;
 
 // Table Constants
 const loadingApp = <HTMLDivElement>document.getElementById("loadingApp")!;
@@ -167,11 +129,14 @@ OBR.onReady(async () =>
     const role = await OBR.player.getRole();
     if (role === "GM")
     {
+        await Utilities.CheckRegistration();
+        const patreonContainer = document.getElementById("patreonContainer")!;
+        patreonContainer.appendChild(Utilities.GetPatreonButton());
         await SetupConfigAction();
     }
     else
     {
-        loadingApp.innerHTML = `Configuration is GM-Access only.`;
+        loadingApp.innerHTML = `<div class="player-view">Configuration is GM-Access only.</div>`;
         await OBR.action.setHeight(70);
         await OBR.action.setWidth(150);
     }
