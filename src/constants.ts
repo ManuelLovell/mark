@@ -4,6 +4,7 @@ export class Constants
     static VERSION = "whatsnew-mark-141";
 
     static LABELSID = "com.battle-system.labels";
+    static MARKCONNECT = "com.battle-system.marked-connect";
     static DICENOTATION = /(\d+)[dD](\d+)(.*)$/i;
     static DICEMODIFIER = /([+-])(\d+)/;
     static PARENTHESESMATCH = /\((\d*d\d+\s*([+-]\s*\d+)?)\)/g;

@@ -157,6 +157,14 @@ export function GetImageBounds(item: Image, dpi: any)
     return { min, max };
 }
 
+export function isValidHexColor(color: string | undefined): boolean
+{
+    if (!color) return false;
+
+    const hexColorRegex = /^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
+    return hexColorRegex.test(color);
+}
+
 export function GetPatreonButton()
 {
     const newImgElement = document.createElement('img');

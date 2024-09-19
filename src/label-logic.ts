@@ -4,7 +4,7 @@ import { Constants } from "./constants";
 
 export class LabelLogic
 {
-    static async UpdateLabel(image: Image, labelData: ILabelData, font: string, opacity: string): Promise<void>
+    static async UpdateLabel(image: Image, labelData: ILabelData, font: string, opacity: string, show?: boolean): Promise<void>
     {
         const brothers = await OBR.scene.items.getItems<Text>((item: any) =>
             item.attachedTo === image.id
@@ -12,12 +12,23 @@ export class LabelLogic
             && item.metadata[`${Constants.EXTENSIONID}/direction`] === GetOppDir(labelData.Direction));
         const labelItemExists = brothers.find(item => item.text.plainText === labelData.Name);
 
-        if (labelItemExists)
+        if (show === undefined)
         {
-            // If it exists, this is a delete.
-            await OBR.scene.items.deleteItems([labelItemExists.id]);
+            if (labelItemExists)
+                await OBR.scene.items.deleteItems([labelItemExists.id]);
+            else
+                await ShowLabel();
         }
-        else
+        else if (show === true)
+        {
+            if (!labelItemExists) await ShowLabel();
+        }
+        else if (show === false)
+        {
+            if (labelItemExists) await OBR.scene.items.deleteItems([labelItemExists.id]);
+        }
+
+        async function ShowLabel()
         {
             // For determing item order and placement
             let placement = 0;
@@ -88,7 +99,6 @@ export class LabelLogic
                 if (brothers.length > 0 && placement !== 0)
                 {
                     label.position.y -= (labelSpacing * placement);
-                    console.log(labelSpacing);
                 }
             }
             if (labelData.Direction == "Bottom")
@@ -274,7 +284,6 @@ export class LabelLogic
                 return height;
             }
         }
-
         function GetOppDir(direction: string): number
         {
             switch (direction)

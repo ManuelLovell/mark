@@ -6,6 +6,7 @@ import { GetGUID, HexToRgb, RgbToHex } from './utilities';
 import './style.css'
 import { Constants } from './constants';
 import * as Utilities from './utilities';
+import { InitiateListeners } from './integrationListener';
 
 //#region Coloris Initialization
 Coloris.init();
@@ -133,6 +134,7 @@ OBR.onReady(async () =>
         const patreonContainer = document.getElementById("patreonContainer")!;
         patreonContainer.appendChild(Utilities.GetPatreonButton());
         await SetupConfigAction();
+        InitiateListeners();
     }
     else
     {
