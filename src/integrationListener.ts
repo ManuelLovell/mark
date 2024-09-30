@@ -36,9 +36,10 @@ export function InitiateListeners()
                     };
 
                     // Try to find the existing one if it's there
-                    const existingLabel = saveData.Labels.find(label => label.Name === transmitData.LabelName);
+                    const existingLabel = saveData.Labels.find(label => label.Name?.toLowerCase().includes(transmitData.LabelName?.toLowerCase()));
                     if (existingLabel)
                     {
+                        currentLabel.Name = existingLabel.Name;
                         currentLabel.Direction = existingLabel.Direction;
                         currentLabel.Color = existingLabel.Color;
                         currentLabel.Id = existingLabel.Id;
