@@ -6,6 +6,7 @@ export class LabelLogic
 {
     static async UpdateLabel(image: Image, labelData: ILabelData, font: string, opacity: string, show?: boolean): Promise<void>
     {
+        const playerColor = await OBR.player.getColor();
         const brothers = await OBR.scene.items.getItems<Text>((item: any) =>
             item.attachedTo === image.id
             && item.type === "TEXT"
@@ -139,7 +140,14 @@ export class LabelLogic
             const labelBounds = await OBR.scene.items.getItemBounds(freshLabel.map(x => x.id));
             const plateCommands = GetPlate(labelBounds, labelData.Direction);
 
-            const namePlate = buildPath().commands(plateCommands).strokeOpacity(0).fillOpacity(labelOpacity).fillColor(BGCOLOR).build();
+            const namePlate = buildPath()
+                .commands(plateCommands)
+                .strokeOpacity(1)
+                .strokeWidth(4)
+                .strokeColor(playerColor)
+                .fillOpacity(labelOpacity)
+                .fillColor(BGCOLOR)
+                .build();
             namePlate.attachedTo = freshLabel[0].id; // Attach to label for cleanup/movement
             namePlate.disableHit = true;
             namePlate.disableAttachmentBehavior = ["ROTATION", "SCALE"];
