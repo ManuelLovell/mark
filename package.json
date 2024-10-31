@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@melloware/coloris": "^0.19.1",
-    "@owlbear-rodeo/sdk": "^2.4.0",
+    "@owlbear-rodeo/sdk": "^3.0.0",
     "vanilla-colorful": "^0.7.2"
   }
 }

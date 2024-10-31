@@ -165,7 +165,7 @@ export class LabelLogic
 
                 const height = Math.abs(maxY - minY);
                 const radius = height / 2;
-                const width = IMAGEBOUNDS.max.x - IMAGEBOUNDS.min.x;
+                const width = maxX - minX;
                 const triangleWidth = 10;//(maxX - minX) * 0.1; // Width of the triangle (10% of the width)
 
                 if (placement !== 0 && (side === "Top" || side === "Bottom"))
@@ -189,11 +189,9 @@ export class LabelLogic
                         [Command.MOVE, minX + radius, minY], // Move to the starting point on the left semi-circle
                         [Command.QUAD, minX, minY, minX, minY + radius], // Draw the left semi-circle
                         [Command.QUAD, minX, maxY, minX + radius, maxY],
-                        [Command.LINE, minX + (width - triangleWidth) / 2, maxY],
-                        [Command.LINE, minX + (width - triangleWidth) / 2 + triangleWidth / 2, maxY + triangleWidth], // Pointer vertex
-                        [Command.LINE, minX + (width - triangleWidth) / 2 + triangleWidth, maxY], // Right vertex
-                        [Command.LINE, minX + (width - triangleWidth) / 2, maxY], // Left vertex
-                        [Command.QUAD, minX, maxY, minX + radius, maxY],
+                        [Command.LINE, minX + (width / 2) - triangleWidth, maxY], // Left vertex
+                        [Command.LINE, minX + (width / 2), maxY + triangleWidth], // Pointer vertex
+                        [Command.LINE, minX + (width / 2) + triangleWidth, maxY], // Right vertex
                         [Command.LINE, maxX - radius, maxY],
                         [Command.QUAD, maxX, maxY, maxX, maxY - radius],
                         [Command.QUAD, maxX, minY, maxX - radius, minY],
@@ -208,14 +206,12 @@ export class LabelLogic
                         [Command.MOVE, minX + radius, minY], // Move to the starting point on the left semi-circle
                         [Command.QUAD, minX, minY, minX, minY + radius], // Draw the left semi-circle
                         [Command.QUAD, minX, maxY, minX + radius, maxY],
-                        [Command.QUAD, minX, maxY, minX + radius, maxY],
                         [Command.LINE, maxX - radius, maxY],
                         [Command.QUAD, maxX, maxY, maxX, maxY - radius],
                         [Command.QUAD, maxX, minY, maxX - radius, minY],
-                        [Command.LINE, minX + (width - triangleWidth) / 2, minY],
-                        [Command.LINE, minX + (width - triangleWidth) / 2 + triangleWidth / 2, minY - triangleWidth], // Pointer vertex
-                        [Command.LINE, minX + (width - triangleWidth) / 2 + triangleWidth, minY], // Right vertex
-                        [Command.LINE, minX + (width - triangleWidth) / 2, minY], // Left vertex
+                        [Command.LINE, minX + (width / 2) + triangleWidth, minY], // Left vertex
+                        [Command.LINE, minX + (width / 2), minY - triangleWidth], // Pointer vertex
+                        [Command.LINE, minX + (width / 2) - triangleWidth, minY], // Right vertex
 
                         [Command.CLOSE] // Close the path
                     ];
@@ -247,7 +243,6 @@ export class LabelLogic
                     const nameplateCommands: PathCommand[] = [
                         [Command.MOVE, minX + radius, minY],
                         [Command.QUAD, minX, minY, minX, (maxY + minY) / 2 - 5],
-                        [Command.QUAD, minX, maxY, minX, (maxY + minY) / 2 + 5],
                         [Command.LINE, minX, (maxY + minY) / 2 - 5],
                         [Command.LINE, image.position.x, image.position.y],
                         [Command.LINE, minX, (maxY + minY) / 2 + 5],
