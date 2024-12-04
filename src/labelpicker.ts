@@ -1,28 +1,27 @@
-import OBR, { Image, Text } from "@owlbear-rodeo/sdk";
+import OBR, { Image, Path } from "@owlbear-rodeo/sdk";
 import { LabelLogic } from "./label-logic";
 import { Constants } from "./constants";
 import * as Utilities from './utilities';
 import './style.css'
 
-
 OBR.onReady(async () =>
 {
     document.documentElement.style.borderRadius = "16px";
-    document.documentElement.style.height = "100%";    
-    
+    document.documentElement.style.height = "100%";
+
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const contextmenu = urlParams.get('contextmenu')!;
 
-    let attachedLabels: Text[] = [];
+    let attachedLabels: Path[] = [];
     const selected = await OBR.player.getSelection();
     const target = await OBR.scene.items.getItems(selected) as Image[];
 
     if (selected?.length === 1)
     {
-        attachedLabels = await OBR.scene.items.getItems<Text>((item: any) =>
+        attachedLabels = await OBR.scene.items.getItems<Path>((item: any) =>
             item.attachedTo === target[0].id
-            && item.type === "TEXT");
+            && item.type === "PATH");
     }
 
     // Set theme accordingly
@@ -60,10 +59,10 @@ OBR.onReady(async () =>
         {
             list1.classList.remove("btn-group");
             list1.classList.add("context-btn-group");
-            
+
             list2.classList.remove("btn-group");
             list2.classList.add("context-btn-group");
-            
+
             list3.classList.remove("btn-group");
             list3.classList.add("context-btn-group");
         }
@@ -90,7 +89,7 @@ OBR.onReady(async () =>
         {
             if (label.Active)
             {
-                const highlight = attachedLabels.find(attach => attach.text.plainText === label.Name);
+                const highlight = attachedLabels.find(attach => attach.name === label.Name);
 
                 const toggleButton = <HTMLButtonElement>document.createElement('button');
                 toggleButton.id = `toggle-${label.Id}`;
@@ -148,7 +147,7 @@ OBR.onReady(async () =>
     {
         document.querySelector("#label-list1")!.innerHTML = `
         <div>
-        No labels found.
+            No labels found.
         </div>`;
     }
 
@@ -164,7 +163,11 @@ OBR.onReady(async () =>
 
         target.forEach(async (t) =>
         {
-            await LabelLogic.UpdateLabel(t, label!, saveData.Distance, saveData.Opacity);
+            await LabelLogic.UpdateLabel(t,
+                label!,
+                saveData.Distance,
+                saveData.Opacity,
+                saveData.Stroke);
         });
     }
 });

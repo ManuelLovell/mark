@@ -1,14 +1,15 @@
 import OBR, { Metadata } from '@owlbear-rodeo/sdk';
 import { setupContextMenu } from './contextMenu';
-import "@melloware/coloris/dist/coloris.css";
-import Coloris from "@melloware/coloris";
 import { GetGUID, HexToRgb, RgbToHex } from './utilities';
-import './style.css'
 import { Constants } from './constants';
-import * as Utilities from './utilities';
 import { InitiateListeners } from './integrationListener';
+import { CreateTooltips } from './bsTooltips';
+import * as Utilities from './utilities';
+import Coloris from "@melloware/coloris";
+import "@melloware/coloris/dist/coloris.css";
+import './style.css'
 
-//#region Coloris Initialization
+//region Coloris Initialization
 Coloris.init();
 Coloris.coloris({
     el: ".coloris",
@@ -33,48 +34,6 @@ Coloris.coloris({
 Coloris.close();
 //#endregion
 
-// Set base HTML (Set Loading instead..)
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div id="loadingApp" class="center">Loading...</div>
-  <div id="labelApp" style="display:none;">
-    <div id="controlContainer">
-        <div style="display:flex;"><div id="bannerText">Marked!</div><div id="patreonContainer"></div></div>
-        <div id="buttonLabels">
-        <div class="nameGroup center">
-        <label for="gr1n">Group #1</label><br>
-        <input type="text" id="gr1n" name="gr1n" maxlength="15" size="10">
-        </div>
-        <div class="nameGroup center">
-        <label for="gr2n">Group #2</label><br>
-        <input type="text" id="gr2n" name="gr2n" maxlength="15" size="10">
-        </div>
-        <div class="nameGroup center">
-        <label for="gr3n">Group #3</label><br>
-        <input type="text" id="gr3n" name="gr3n" maxlength="15" size="10">
-        </div>
-        </div>
-        <div id="mainButtonsGroup" class="center">
-        <label for="distance">Size: </label><input type="number" id="distance" name="distance">
-        <label for="distance">Opacity: </label><input type="number" id="opacity" name="opacity">
-        <div id="mainButtons"></div></div>
-    </div>
-    <div id="tableContainer">
-        <table id="table-one" style="width:100%">
-        <thead>
-        <tr id="tableHeader">
-        <th style="width: 5%">🔛</th>
-        <th id="labelSort" style="width: 55%">Label Name</th>
-        <th style="width: 10%">Group</th>
-        <th style="width: 20%">Direction</th>
-        <th style="width: 10%">🖍️</th>
-        </tr>
-        </thead>
-        <tbody id="label-list"></tbody>
-        </table>
-    </div>
-  </div>
-  `;
-
 // Table Constants
 const loadingApp = <HTMLDivElement>document.getElementById("loadingApp")!;
 const labelApp = <HTMLDivElement>document.getElementById("labelApp")!;
@@ -89,30 +48,7 @@ const groupTwo = <HTMLInputElement>document.getElementById("gr2n")!;
 const groupThree = <HTMLInputElement>document.getElementById("gr3n")!;
 const distance = <HTMLInputElement>document.getElementById("distance")!;
 const opacity = <HTMLInputElement>document.getElementById("opacity")!;
-
-// Test Data
-const defaultSet: ILabelData[] = [
-    { Id: "1", Name: "Blinded 🕶️", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "2", Name: "Charmed 💘", Color: "#ff0000", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "3", Name: "Deafened 🎧", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "4", Name: "Frightened 😱", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "5", Name: "Grappled 🫂", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "6", Name: "Incapacitated 💘", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "7", Name: "Invisible 😶‍🌫️", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "8", Name: "Paralyzed ⚡", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "9", Name: "Petrified 🪨", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "10", Name: "Poisoned 🤢", Color: "#008000", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "11", Name: "Prone 🦦", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "12", Name: "Restrained 🪢", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "13", Name: "Stunned 💫", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "14", Name: "Unconscious 💤", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "15", Name: "Exhaustion 🦥", Color: "#FFFFFF", Group: "#1", Direction: "Top", Active: 1 },
-    { Id: "16", Name: "Bardic Inspiration 🎵", Color: "#FFFFFF", Group: "#2", Direction: "Left", Active: 1 },
-    { Id: "17", Name: "Champion 👑", Color: "#FFFFFF", Group: "#3", Direction: "Right", Active: 1 },
-];
-const defaultGroups: string[] = ["Conditions", "Buffs", "Extra"];
-const defaultSpacing = "36"; // This is now font size 
-const defaultOpacity = "85";
+const strokewidth = <HTMLInputElement>document.getElementById("stroke")!;
 
 OBR.onReady(async () =>
 {
@@ -135,6 +71,7 @@ OBR.onReady(async () =>
         patreonContainer.appendChild(Utilities.GetPatreonButton());
         await SetupConfigAction();
         InitiateListeners();
+        CreateTooltips();
     }
     else
     {
@@ -142,7 +79,6 @@ OBR.onReady(async () =>
         await OBR.action.setHeight(70);
         await OBR.action.setWidth(150);
     }
-
 });
 
 /** Add row to table one */
@@ -300,6 +236,7 @@ function GetSaveData(): ISaveData
     const groups: IGroup[] = [];
     const distanceNumber = distance.value;
     const opacityNumber = opacity.value;
+    const strokeNumber = strokewidth.value;
 
     var table = <HTMLTableElement>document.getElementById("label-list");
     for (var i = 0, row: HTMLTableRowElement; row = table.rows[i]; i++)
@@ -327,7 +264,7 @@ function GetSaveData(): ISaveData
     groups.push({ Name: groupTwo.value, Num: "#2" });
     groups.push({ Name: groupThree.value, Num: "#3" });
 
-    return { Groups: groups, Labels: labels.reverse(), Distance: distanceNumber, Opacity: opacityNumber };
+    return { Groups: groups, Labels: labels.reverse(), Distance: distanceNumber, Opacity: opacityNumber, Stroke: strokeNumber };
 }
 
 /**Set the metadata back to defaults */
@@ -342,14 +279,15 @@ async function Reset(): Promise<void>
 
 async function LoadDefaults(): Promise<void>
 {
-    groupOne.value = defaultGroups[0];
-    groupTwo.value = defaultGroups[1];
-    groupThree.value = defaultGroups[2];
-    distance.value = defaultSpacing;
-    opacity.value = defaultOpacity;
+    groupOne.value = Constants.DEFAULTGROUP[0];
+    groupTwo.value = Constants.DEFAULTGROUP[1];
+    groupThree.value = Constants.DEFAULTGROUP[2];
+    distance.value = Constants.DEFAULTFONTSIZE;
+    opacity.value = Constants.DEFAULTOPACITY;
+    strokewidth.value = Constants.DEFAULTSTROKE;
 
     // Load defaults
-    defaultSet.forEach((label) =>
+    Constants.DEFAULTSET.forEach((label) =>
     {
         AddToGroup(label);
     });
@@ -394,7 +332,7 @@ async function SetupConfigAction(): Promise<void>
     distance.max = "999";
     distance.min = "1";
     distance.maxLength = 4;
-    distance.value = saveData?.Distance ? saveData.Distance : defaultSpacing;
+    distance.value = saveData?.Distance ? saveData.Distance : Constants.DEFAULTFONTSIZE;
     distance.oninput = (ev) =>
     {
         checkValue(ev.target);
@@ -404,8 +342,18 @@ async function SetupConfigAction(): Promise<void>
     opacity.max = "99";
     opacity.min = "1";
     opacity.maxLength = 2;
-    opacity.value = saveData?.Opacity ? saveData.Opacity : defaultOpacity;
+    opacity.value = saveData?.Opacity ? saveData.Opacity : Constants.DEFAULTOPACITY;
     opacity.oninput = (ev) =>
+    {
+        checkValue(ev.target);
+    };
+
+    ///Setup Stroke Configuration
+    strokewidth.max = "20";
+    strokewidth.min = "0";
+    strokewidth.maxLength = 2;
+    strokewidth.value = saveData?.Stroke ? saveData.Stroke : Constants.DEFAULTSTROKE;
+    strokewidth.oninput = (ev) =>
     {
         checkValue(ev.target);
     };
@@ -514,7 +462,7 @@ async function SetupConfigAction(): Promise<void>
     const resetButton = document.createElement('input');
     resetButton.type = "image";
     resetButton.className = "Icon clickable";
-    resetButton.id = "addButton";
+    resetButton.id = "resetButton";
     resetButton.onclick = async function () 
     {
         await Reset();

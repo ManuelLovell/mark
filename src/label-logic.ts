@@ -1,17 +1,22 @@
-import OBR, { Image, Text, Metadata, buildText, Command, buildPath, PathCommand, BoundingBox } from "@owlbear-rodeo/sdk";
+import OBR, { Image, Metadata, buildText, Command, buildPath, PathCommand, BoundingBox, Vector2, Path } from "@owlbear-rodeo/sdk";
 import { CombineGUIDs, GetImageBounds } from "./utilities";
 import { Constants } from "./constants";
 
 export class LabelLogic
 {
-    static async UpdateLabel(image: Image, labelData: ILabelData, font: string, opacity: string, show?: boolean): Promise<void>
+    static async UpdateLabel(image: Image,
+        labelData: ILabelData,
+        font: string = Constants.DEFAULTFONTSIZE,
+        opacity: string = Constants.DEFAULTOPACITY,
+        stroke: string = Constants.DEFAULTSTROKE,
+        show?: boolean): Promise<void>
     {
         const playerColor = await OBR.player.getColor();
-        const brothers = await OBR.scene.items.getItems<Text>((item: any) =>
+        const brothers = await OBR.scene.items.getItems<Path>((item: any) =>
             item.attachedTo === image.id
-            && item.type === "TEXT"
+            && item.type === "PATH"
             && item.metadata[`${Constants.EXTENSIONID}/direction`] === GetOppDir(labelData.Direction));
-        const labelItemExists = brothers.find(item => item.text.plainText === labelData.Name);
+        const labelItemExists = brothers.find(item => item.name === labelData.Name);
 
         if (show === undefined)
         {
@@ -84,7 +89,7 @@ export class LabelLogic
             label.visible = image.visible ? true : false; // Set Visibility
             label.locked = true; // Set Lock, Don't want people to touch
             label.metadata = markMeta;
-            label.disableAttachmentBehavior = ["ROTATION", "SCALE"];
+            label.disableHit = true;
             label.type = "TEXT"; // Set Item Type
             label.text.type = "PLAIN";
             label.text.style.fontWeight = 600;
@@ -135,158 +140,38 @@ export class LabelLogic
             // Need offset for consecutive tags per token side
             await OBR.scene.items.addItems([label]);
 
-            // Add nameplate
-            const freshLabel = await OBR.scene.items.getItems(x => x.metadata[`${Constants.EXTENSIONID}/comboid`] === COMBOID);
-            const labelBounds = await OBR.scene.items.getItemBounds(freshLabel.map(x => x.id));
-            const plateCommands = GetPlate(labelBounds, labelData.Direction);
-
-            const namePlate = buildPath()
-                .commands(plateCommands)
-                .strokeOpacity(1)
-                .strokeWidth(4)
-                .strokeColor(playerColor)
-                .fillOpacity(labelOpacity)
-                .fillColor(BGCOLOR)
-                .build();
-            namePlate.attachedTo = freshLabel[0].id; // Attach to label for cleanup/movement
-            namePlate.disableHit = true;
-            namePlate.disableAttachmentBehavior = ["ROTATION", "SCALE"];
-            await OBR.scene.items.addItems([namePlate]);
-
-            /// Functions
-            function GetPlate(boundingBox: BoundingBox, side: string)
+            setTimeout(async () =>
             {
-                const plateSpacing = boundingBox.max.y - boundingBox.min.y;
 
-                const minX = boundingBox.min.x - 10;
-                const maxX = boundingBox.max.x + 10;
-                const minY = boundingBox.min.y;
-                const maxY = minY + plateSpacing;
+                // Add nameplate
+                const labelBounds = await OBR.scene.items.getItemBounds([label.id]);
+                const plateCommands = GetPlate(labelBounds, labelData.Direction, placement);
 
-                const height = Math.abs(maxY - minY);
-                const radius = height / 2;
-                const width = maxX - minX;
-                const triangleWidth = 10;//(maxX - minX) * 0.1; // Width of the triangle (10% of the width)
+                const namePlate = buildPath()
+                    .name(labelData.Name)
+                    .commands(plateCommands)
+                    .position(label.position)
+                    .strokeOpacity(1)
+                    .strokeWidth(parseInt(stroke))
+                    .strokeColor(playerColor)
+                    .fillOpacity(labelOpacity)
+                    .fillColor(BGCOLOR)
+                    .metadata(markMeta)
+                    .attachedTo(image.id)
+                    .build();
 
-                if (placement !== 0 && (side === "Top" || side === "Bottom"))
+                await OBR.scene.items.addItems([namePlate]);
+                await OBR.scene.items.updateItems([label.id], (labels) =>
                 {
-                    //Start drawing the path
-                    const nameplateCommands: PathCommand[] = [
-                        [Command.MOVE, minX + radius, minY],
-                        [Command.QUAD, minX, minY, minX, minY + radius],
-                        [Command.LINE, minX, maxY - radius],
-                        [Command.QUAD, minX, maxY, minX + radius, maxY],
-                        [Command.LINE, maxX - radius, maxY],
-                        [Command.QUAD, maxX, maxY, maxX, maxY - radius],
-                        [Command.QUAD, maxX, minY, maxX - radius, minY],
-                        [Command.CLOSE]
-                    ];
-                    return nameplateCommands;
-                }
-                else if (side === "Top")
-                {
-                    const nameplateCommands: PathCommand[] = [
-                        [Command.MOVE, minX + radius, minY], // Move to the starting point on the left semi-circle
-                        [Command.QUAD, minX, minY, minX, minY + radius], // Draw the left semi-circle
-                        [Command.QUAD, minX, maxY, minX + radius, maxY],
-                        [Command.LINE, minX + (width / 2) - triangleWidth, maxY], // Left vertex
-                        [Command.LINE, minX + (width / 2), maxY + triangleWidth], // Pointer vertex
-                        [Command.LINE, minX + (width / 2) + triangleWidth, maxY], // Right vertex
-                        [Command.LINE, maxX - radius, maxY],
-                        [Command.QUAD, maxX, maxY, maxX, maxY - radius],
-                        [Command.QUAD, maxX, minY, maxX - radius, minY],
+                    for (let label of labels)
+                    {
+                        label.attachedTo = namePlate.id;
+                    }
+                })
 
-                        [Command.CLOSE] // Close the path
-                    ];
-                    return nameplateCommands;
-                }
-                else if (side === "Bottom")
-                {
-                    const nameplateCommands: PathCommand[] = [
-                        [Command.MOVE, minX + radius, minY], // Move to the starting point on the left semi-circle
-                        [Command.QUAD, minX, minY, minX, minY + radius], // Draw the left semi-circle
-                        [Command.QUAD, minX, maxY, minX + radius, maxY],
-                        [Command.LINE, maxX - radius, maxY],
-                        [Command.QUAD, maxX, maxY, maxX, maxY - radius],
-                        [Command.QUAD, maxX, minY, maxX - radius, minY],
-                        [Command.LINE, minX + (width / 2) + triangleWidth, minY], // Left vertex
-                        [Command.LINE, minX + (width / 2), minY - triangleWidth], // Pointer vertex
-                        [Command.LINE, minX + (width / 2) - triangleWidth, minY], // Right vertex
-
-                        [Command.CLOSE] // Close the path
-                    ];
-                    return nameplateCommands;
-                }
-                else if (side === "Left")
-                {
-                    //Start drawing the path
-                    const nameplateCommands: PathCommand[] = [
-                        // Move to the starting point on the left semi-circle
-                        [Command.MOVE, minX + radius, minY],
-                        [Command.QUAD, minX, minY, minX, minY + radius],
-                        [Command.LINE, minX, maxY - radius],
-                        [Command.QUAD, minX, maxY, minX + radius, maxY],
-                        [Command.LINE, maxX - radius, maxY],
-                        [Command.QUAD, maxX, maxY, maxX, (maxY + minY) / 2 + 5],
-                        [Command.LINE, image.position.x, image.position.y],
-                        [Command.LINE, maxX, (maxY + minY) / 2 - 5],
-                        [Command.QUAD, maxX, minY, maxX - radius, minY],
-                        [Command.LINE, minX + radius, minY],
-                        // Close the path
-                        [Command.CLOSE]
-                    ];
-                    return nameplateCommands;
-                }
-                else
-                {
-                    //Start drawing the path
-                    const nameplateCommands: PathCommand[] = [
-                        [Command.MOVE, minX + radius, minY],
-                        [Command.QUAD, minX, minY, minX, (maxY + minY) / 2 - 5],
-                        [Command.LINE, minX, (maxY + minY) / 2 - 5],
-                        [Command.LINE, image.position.x, image.position.y],
-                        [Command.LINE, minX, (maxY + minY) / 2 + 5],
-                        [Command.QUAD, minX, maxY, minX + radius, maxY],
-                        [Command.LINE, maxX - radius, maxY],
-                        [Command.QUAD, maxX, maxY, maxX, maxY - radius],
-                        [Command.QUAD, maxX, minY, maxX - radius, minY],
-                        [Command.CLOSE]
-                    ];
-                    return nameplateCommands;
-                }
-            }
-
-            function getTextWidth(text: string, fontSize: string): number
-            {
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d");
-
-                if (!ctx)
-                {
-                    throw new Error("Canvas 2D context is not supported.");
-                }
-
-                ctx.font = fontSize;
-                const textMetrics = ctx.measureText(text);
-                return textMetrics.width;
-            }
-
-            function getTextHeight(text: string, fontSize: string): number
-            {
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d");
-
-                if (!ctx)
-                {
-                    throw new Error("Canvas 2D context is not supported.");
-                }
-
-                ctx.font = fontSize;
-                const textMetrics = ctx.measureText(text);
-                const height = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
-                return height;
-            }
+            }, 150);
         }
+
         function GetOppDir(direction: string): number
         {
             switch (direction)
@@ -302,6 +187,146 @@ export class LabelLogic
                 default:
                     throw new Error('Invalid direction');
             }
+        }
+
+        /// Functions
+        function GetPlate(boundingBox: BoundingBox, side: string, placement: number)
+        {
+            const plateSpacing = boundingBox.max.y - boundingBox.min.y;
+
+            const xPos = boundingBox.min.x;
+            const yPos = boundingBox.min.y;
+            const minBound: Vector2 = { x: boundingBox.min.x - 10, y: boundingBox.min.y };
+            const maxBound: Vector2 = { x: boundingBox.max.x + 10, y: boundingBox.min.y + plateSpacing };
+
+            const minX = minBound.x - xPos;
+            const maxX = maxBound.x - xPos;
+
+            const minY = minBound.y - yPos;
+            const maxY = maxBound.y - yPos;
+
+            const height = Math.abs(maxY - minY);
+            const radius = height / 2;
+            const width = maxX - minX;
+            const triangleWidth = 10;//(maxX - minX) * 0.1; // Width of the triangle (10% of the width)
+
+            if (placement !== 0 && (side === "Top" || side === "Bottom"))
+            {
+                //Start drawing the path
+                const nameplateCommands: PathCommand[] = [
+                    [Command.MOVE, minX + radius, minY],
+                    [Command.QUAD, minX, minY, minX, minY + radius],
+                    [Command.LINE, minX, maxY - radius],
+                    [Command.QUAD, minX, maxY, minX + radius, maxY],
+                    [Command.LINE, maxX - radius, maxY],
+                    [Command.QUAD, maxX, maxY, maxX, maxY - radius],
+                    [Command.QUAD, maxX, minY, maxX - radius, minY],
+                    [Command.CLOSE]
+                ];
+                return nameplateCommands;
+            }
+            else if (side === "Top")
+            {
+                const nameplateCommands: PathCommand[] = [
+                    [Command.MOVE, minX + radius, minY], // Move to the starting point on the left semi-circle
+                    [Command.QUAD, minX, minY, minX, minY + radius], // Draw the left semi-circle
+                    [Command.QUAD, minX, maxY, minX + radius, maxY],
+                    [Command.LINE, minX + (width / 2) - triangleWidth, maxY], // Left vertex
+                    [Command.LINE, minX + (width / 2), maxY + triangleWidth], // Pointer vertex
+                    [Command.LINE, minX + (width / 2) + triangleWidth, maxY], // Right vertex
+                    [Command.LINE, maxX - radius, maxY],
+                    [Command.QUAD, maxX, maxY, maxX, maxY - radius],
+                    [Command.QUAD, maxX, minY, maxX - radius, minY],
+
+                    [Command.CLOSE] // Close the path
+                ];
+                return nameplateCommands;
+            }
+            else if (side === "Bottom")
+            {
+                const nameplateCommands: PathCommand[] = [
+                    [Command.MOVE, minX + radius, minY], // Move to the starting point on the left semi-circle
+                    [Command.QUAD, minX, minY, minX, minY + radius], // Draw the left semi-circle
+                    [Command.QUAD, minX, maxY, minX + radius, maxY],
+                    [Command.LINE, maxX - radius, maxY],
+                    [Command.QUAD, maxX, maxY, maxX, maxY - radius],
+                    [Command.QUAD, maxX, minY, maxX - radius, minY],
+                    [Command.LINE, minX + (width / 2) + triangleWidth, minY], // Left vertex
+                    [Command.LINE, minX + (width / 2), minY - triangleWidth], // Pointer vertex
+                    [Command.LINE, minX + (width / 2) - triangleWidth, minY], // Right vertex
+
+                    [Command.CLOSE] // Close the path
+                ];
+                return nameplateCommands;
+            }
+            else if (side === "Left")
+            {
+                //Start drawing the path
+                const nameplateCommands: PathCommand[] = [
+                    // Move to the starting point on the left semi-circle
+                    [Command.MOVE, minX + radius, minY],
+                    [Command.QUAD, minX, minY, minX, minY + radius],
+                    [Command.LINE, minX, maxY - radius],
+                    [Command.QUAD, minX, maxY, minX + radius, maxY],
+                    [Command.LINE, maxX - radius, maxY],
+                    [Command.QUAD, maxX, maxY, maxX, (maxY + minY) / 2 + 5],
+                    [Command.LINE, image.position.x - xPos, image.position.y - yPos],
+                    [Command.LINE, maxX, (maxY + minY) / 2 - 5],
+                    [Command.QUAD, maxX, minY, maxX - radius, minY],
+                    [Command.LINE, minX + radius, minY],
+                    // Close the path
+                    [Command.CLOSE]
+                ];
+                return nameplateCommands;
+            }
+            else
+            {
+                //Start drawing the path
+                const nameplateCommands: PathCommand[] = [
+                    [Command.MOVE, minX + radius, minY],
+                    [Command.QUAD, minX, minY, minX, (maxY + minY) / 2 - 5],
+                    [Command.LINE, minX, (maxY + minY) / 2 - 5],
+                    [Command.LINE, image.position.x - xPos, image.position.y - yPos],
+                    [Command.LINE, minX, (maxY + minY) / 2 + 5],
+                    [Command.QUAD, minX, maxY, minX + radius, maxY],
+                    [Command.LINE, maxX - radius, maxY],
+                    [Command.QUAD, maxX, maxY, maxX, maxY - radius],
+                    [Command.QUAD, maxX, minY, maxX - radius, minY],
+                    [Command.CLOSE]
+                ];
+                return nameplateCommands;
+            }
+        }
+
+        function getTextWidth(text: string, fontSize: string): number
+        {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            if (!ctx)
+            {
+                throw new Error("Canvas 2D context is not supported.");
+            }
+
+            ctx.font = fontSize;
+            const textMetrics = ctx.measureText(text);
+            return textMetrics.width;
+        }
+
+        function getTextHeight(text: string, fontSize: string): number
+        {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            if (!ctx)
+            {
+                throw new Error("Canvas 2D context is not supported.");
+            }
+
+            ctx.font = fontSize;
+            const textMetrics = ctx.measureText(text);
+            const height = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+            return height;
         }
     }
 }

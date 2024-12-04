@@ -4,4 +4,5 @@ interface ISaveData
     Groups: IGroup[];
     Distance: string;
     Opacity: string;
+    Stroke: string;
 }

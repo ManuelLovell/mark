@@ -47,7 +47,12 @@ export function InitiateListeners()
 
                     const targetToken = sceneTokens.find(x => x.id === transmitData.TokenId);
                     if (targetToken)
-                        await LabelLogic.UpdateLabel(targetToken, currentLabel, currentDistance, currentOpacity, transmitData.Show);
+                        await LabelLogic.UpdateLabel(targetToken,
+                            currentLabel,
+                            currentDistance,
+                            currentOpacity,
+                            Constants.DEFAULTSTROKE,
+                            transmitData.Show);
                 }
             }
         }
