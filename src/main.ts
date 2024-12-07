@@ -1,4 +1,4 @@
-import OBR, { Metadata } from '@owlbear-rodeo/sdk';
+import OBR, { buildText, Metadata } from '@owlbear-rodeo/sdk';
 import { setupContextMenu } from './contextMenu';
 import { GetGUID, HexToRgb, RgbToHex } from './utilities';
 import { Constants } from './constants';
@@ -79,6 +79,37 @@ OBR.onReady(async () =>
         await OBR.action.setHeight(70);
         await OBR.action.setWidth(150);
     }
+
+    // This is emoji preload.
+    setTimeout(async () =>
+    {
+        const label = buildText()
+            .fillColor("black")
+            .plainText("You found me. 😱")
+            .fillOpacity(0)
+            .strokeWidth(0)
+            .strokeColor("white")
+            .strokeOpacity(0)
+            .build();
+        label.position = { x: -5000, y: -5000 };
+        label.visible = false; // Set Visibility
+        label.locked = true; // Set Lock, Don't want people to touch
+        label.disableHit = true;
+        label.type = "TEXT"; // Set Item Type
+        label.text.type = "PLAIN";
+        label.text.style.fontWeight = 100;
+        label.text.style.fontSize = 12;
+        label.text.style.textAlign = "CENTER";
+        label.text.style.fontFamily = "Roboto";
+        await OBR.scene.items.addItems([label]);
+
+        await OBR.scene.items.getItemBounds([label.id]);
+
+        setTimeout(async () =>
+        {
+            await OBR.scene.items.deleteItems([label.id]);
+        }, (1000));
+    }, (1000));
 });
 
 /** Add row to table one */

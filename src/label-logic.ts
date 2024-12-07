@@ -140,36 +140,31 @@ export class LabelLogic
             // Need offset for consecutive tags per token side
             await OBR.scene.items.addItems([label]);
 
-            setTimeout(async () =>
+            // Add nameplate
+            const labelBounds = await OBR.scene.items.getItemBounds([label.id]);
+            const plateCommands = GetPlate(labelBounds, labelData.Direction, placement);
+
+            const namePlate = buildPath()
+                .name(labelData.Name)
+                .commands(plateCommands)
+                .position(label.position)
+                .strokeOpacity(1)
+                .strokeWidth(parseInt(stroke))
+                .strokeColor(playerColor)
+                .fillOpacity(labelOpacity)
+                .fillColor(BGCOLOR)
+                .metadata(markMeta)
+                .attachedTo(image.id)
+                .build();
+
+            await OBR.scene.items.addItems([namePlate]);
+            await OBR.scene.items.updateItems([label.id], (labels) =>
             {
-
-                // Add nameplate
-                const labelBounds = await OBR.scene.items.getItemBounds([label.id]);
-                const plateCommands = GetPlate(labelBounds, labelData.Direction, placement);
-
-                const namePlate = buildPath()
-                    .name(labelData.Name)
-                    .commands(plateCommands)
-                    .position(label.position)
-                    .strokeOpacity(1)
-                    .strokeWidth(parseInt(stroke))
-                    .strokeColor(playerColor)
-                    .fillOpacity(labelOpacity)
-                    .fillColor(BGCOLOR)
-                    .metadata(markMeta)
-                    .attachedTo(image.id)
-                    .build();
-
-                await OBR.scene.items.addItems([namePlate]);
-                await OBR.scene.items.updateItems([label.id], (labels) =>
+                for (let label of labels)
                 {
-                    for (let label of labels)
-                    {
-                        label.attachedTo = namePlate.id;
-                    }
-                })
-
-            }, 150);
+                    label.attachedTo = namePlate.id;
+                }
+            })
         }
 
         function GetOppDir(direction: string): number
