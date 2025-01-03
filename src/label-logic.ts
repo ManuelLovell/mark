@@ -155,6 +155,7 @@ export class LabelLogic
                 .fillColor(BGCOLOR)
                 .metadata(markMeta)
                 .attachedTo(image.id)
+                .disableAttachmentBehavior(["ROTATION", "SCALE"])
                 .build();
 
             await OBR.scene.items.addItems([namePlate]);
