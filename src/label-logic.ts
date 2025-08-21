@@ -156,6 +156,7 @@ export class LabelLogic
                 .metadata(markMeta)
                 .attachedTo(image.id)
                 .disableAttachmentBehavior(["ROTATION", "SCALE"])
+                .locked(true)
                 .build();
 
             await OBR.scene.items.addItems([namePlate]);
