@@ -6,4 +6,5 @@ interface ILabelData
     Color: string;
     Active: number;
     Group: string;
+    Counter: number;
 }

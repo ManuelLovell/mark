@@ -1,16 +1,14 @@
-import OBR, { Image, Metadata, buildText, Command, buildPath, PathCommand, BoundingBox, Vector2, Path } from "@owlbear-rodeo/sdk";
+import OBR, { Image, Metadata, buildText, Command, buildPath, PathCommand, BoundingBox, Vector2, Path, Item } from "@owlbear-rodeo/sdk";
 import { CombineGUIDs, GetImageBounds } from "./utilities";
 import { Constants } from "./constants";
 
-export class LabelLogic
-{
+export class LabelLogic {
     static async UpdateLabel(image: Image,
         labelData: ILabelData,
         font: string = Constants.DEFAULTFONTSIZE,
         opacity: string = Constants.DEFAULTOPACITY,
         stroke: string = Constants.DEFAULTSTROKE,
-        show?: boolean): Promise<void>
-    {
+        show?: boolean): Promise<void> {
         const playerColor = await OBR.player.getColor();
         const brothers = await OBR.scene.items.getItems<Path>((item: any) =>
             item.attachedTo === image.id
@@ -18,41 +16,34 @@ export class LabelLogic
             && item.metadata[`${Constants.EXTENSIONID}/direction`] === GetOppDir(labelData.Direction));
         const labelItemExists = brothers.find(item => item.name === labelData.Name);
 
-        if (show === undefined)
-        {
+        if (show === undefined) {
             if (labelItemExists)
                 await OBR.scene.items.deleteItems([labelItemExists.id]);
             else
                 await ShowLabel();
         }
-        else if (show === true)
-        {
+        else if (show === true) {
             if (!labelItemExists) await ShowLabel();
         }
-        else if (show === false)
-        {
+        else if (show === false) {
             if (labelItemExists) await OBR.scene.items.deleteItems([labelItemExists.id]);
         }
 
-        async function ShowLabel()
-        {
+        async function ShowLabel() {
             // For determing item order and placement
             let placement = 0;
             let labelSpacing = 0;
 
-            if (brothers.length > 0)
-            {
+            if (brothers.length > 0) {
                 // Find the item bounds height for later if there are others.
                 const brotherItem = await OBR.scene.items.getItemBounds([brothers[0].id]);
                 labelSpacing = brotherItem.max.y - brotherItem.min.y;
 
-                for (let index = 0; index < brothers.length + 1; index++)
-                {
+                for (let index = 0; index < brothers.length + 1; index++) {
                     let spot = false;
                     spot = brothers.some((brother) => brother.metadata[`${Constants.EXTENSIONID}/place`] === index);
 
-                    if (!spot)
-                    {
+                    if (!spot) {
                         placement = index;
                         break;
                     }
@@ -97,43 +88,35 @@ export class LabelLogic
             label.text.style.textAlign = "CENTER";
             label.text.style.fontFamily = "Roboto";
 
-            if (labelData.Direction == "Top")
-            {
+            if (labelData.Direction == "Top") {
                 label.position.x -= (labelWidth / 2);
                 label.position.y = IMAGEBOUNDS.min.y - (labelHeight + 20);
 
-                if (brothers.length > 0 && placement !== 0)
-                {
+                if (brothers.length > 0 && placement !== 0) {
                     label.position.y -= (labelSpacing * placement);
                 }
             }
-            if (labelData.Direction == "Bottom")
-            {
+            if (labelData.Direction == "Bottom") {
                 label.position.x -= (labelWidth / 2);
                 label.position.y = IMAGEBOUNDS.max.y - (labelHeight / 2) + 45;
 
-                if (brothers.length > 0 && placement !== 0)
-                {
+                if (brothers.length > 0 && placement !== 0) {
                     label.position.y += (labelSpacing * placement);
                 }
             }
-            if (labelData.Direction == "Right")
-            {
+            if (labelData.Direction == "Right") {
                 label.position.x = IMAGEBOUNDS.max.x + 15;
                 label.position.y -= labelHeight / 2;
 
-                if (brothers.length > 0 && placement !== 0)
-                {
+                if (brothers.length > 0 && placement !== 0) {
                     label.position.y += (labelSpacing * placement);
                 }
             }
-            if (labelData.Direction == "Left")
-            {
+            if (labelData.Direction == "Left") {
                 label.position.x = IMAGEBOUNDS.min.x - 15;
                 label.position.x -= (labelWidth + 15);
                 label.position.y -= labelHeight / 2;
-                if (brothers.length > 0 && placement !== 0)
-                {
+                if (brothers.length > 0 && placement !== 0) {
                     label.position.y -= (labelSpacing * placement);
                 }
             }
@@ -159,20 +142,119 @@ export class LabelLogic
                 .locked(true)
                 .build();
 
-            await OBR.scene.items.addItems([namePlate]);
-            await OBR.scene.items.updateItems([label.id], (labels) =>
-            {
-                for (let label of labels)
-                {
+            const platesToAdd: Item[] = [namePlate];
+            // Add sub nameplate if Counter === 1
+            if (labelData.Counter === 1) {
+                // Sub nameplate size and position
+                const SUB_WIDTH = 100;
+                const SUB_HEIGHT = labelBounds.max.y - labelBounds.min.y;
+                let subPlatePos = { ...label.position };
+                // Adjust position based on direction
+                if (labelData.Direction === "Right" || labelData.Direction === "Top") {
+                    subPlatePos.x += (labelBounds.max.x - labelBounds.min.x) + 10;
+                } else if (labelData.Direction === "Left" || labelData.Direction === "Bottom") {
+                    subPlatePos.x -= (SUB_WIDTH + 10);
+                }
+                // Build sub nameplate path commands (simple rounded rect)
+                const r = 10; // corner radius
+                const w = SUB_WIDTH;
+                const h = SUB_HEIGHT;
+                const subPlateCommands: PathCommand[] = [
+                    [Command.MOVE, r, 0],
+                    [Command.LINE, w - r, 0],
+                    [Command.QUAD, w, 0, w, r],
+                    [Command.LINE, w, h - r],
+                    [Command.QUAD, w, h, w - r, h],
+                    [Command.LINE, r, h],
+                    [Command.QUAD, 0, h, 0, h - r],
+                    [Command.LINE, 0, r],
+                    [Command.QUAD, 0, 0, r, 0],
+                    [Command.CLOSE]
+                ];
+                const subNamePlate = buildPath()
+                    .name(labelData.Name + "-sub")
+                    .commands(subPlateCommands)
+                    .position(subPlatePos)
+                    .strokeOpacity(1)
+                    .strokeWidth(parseInt(stroke))
+                    .strokeColor(playerColor)
+                    .fillOpacity(labelOpacity)
+                    .fillColor(BGCOLOR)
+                    .metadata(markMeta)
+                    .attachedTo(namePlate.id)
+                    .disableAttachmentBehavior(["ROTATION", "SCALE"])
+                    .locked(true)
+                    .build();
+
+                const minusButton = buildPath()
+                    .locked(false)
+                    .commands(Constants.MINUSBUTTON)
+                    .scale({ x: .4, y: .4 })
+                    .locked(true)
+                    .name("Minus Button")
+                    .metadata({ [`${Constants.EXTENSIONID}/minusId`]: namePlate.id })
+                    .position({ x: subPlatePos.x + 26, y: subPlatePos.y + 27 })
+                    .strokeColor(labelData.Color)
+                    .strokeWidth(4)
+                    .strokeOpacity(.5)
+                    .disableAutoZIndex(true)
+                    .zIndex(500)
+                    .attachedTo(namePlate.id)
+                    .layer("CONTROL")
+                    .build();
+                       
+                const counterText = buildText()
+                    .fillColor("white")
+                    .plainText("1")
+                    .fillOpacity(labelOpacity)
+                    .strokeWidth(4)
+                    .strokeColor("black")
+                    .strokeOpacity(1)
+                    .metadata({ [`${Constants.EXTENSIONID}/counterId`]: namePlate.id })
+                    .position({ x: subPlatePos.x + 40, y: subPlatePos.y + 1})
+                    .layer("CONTROL")
+                    .zIndex(1000)
+                    .attachedTo(namePlate.id)
+                    .build();
+
+            counterText.disableHit = true;
+            counterText.type = "TEXT"; // Set Item Type
+            counterText.text.type = "PLAIN";
+            counterText.text.style.fontWeight = 600;
+            counterText.text.style.fontSize = FONTSIZE;
+            counterText.text.style.textAlign = "CENTER";
+            counterText.text.style.fontFamily = "Roboto";
+
+                const addButton = buildPath()
+                    .locked(false)
+                    .commands(Constants.ADDBUTTON)
+                    .scale({ x: .4, y: .4 })
+                    .locked(true)
+                    .name("Add Button")
+                    .metadata({ [`${Constants.EXTENSIONID}/addId`]: namePlate.id })
+                    .position({ x: subPlatePos.x + 74, y: subPlatePos.y + 27 })
+                    .strokeColor(labelData.Color)
+                    .strokeWidth(4)
+                    .strokeOpacity(.5)
+                    .disableAutoZIndex(true)
+                    .attachedTo(namePlate.id)
+                    .zIndex(500)
+                    .layer("CONTROL")
+                    .build();
+
+                platesToAdd.push(subNamePlate, minusButton, counterText,addButton);
+            }
+
+            await OBR.scene.items.addItems(platesToAdd);
+            await OBR.scene.items.updateItems([label.id], (labels) => {
+                for (let label of labels) {
                     label.attachedTo = namePlate.id;
                 }
             })
         }
 
-        function GetOppDir(direction: string): number
-        {
-            switch (direction)
-            {
+        function GetOppDir(direction: string): number {
+            switch (direction) {
                 case 'Top':
                     return 601;
                 case 'Bottom':
@@ -187,8 +269,7 @@ export class LabelLogic
         }
 
         /// Functions
-        function GetPlate(boundingBox: BoundingBox, side: string, placement: number)
-        {
+        function GetPlate(boundingBox: BoundingBox, side: string, placement: number) {
             const plateSpacing = boundingBox.max.y - boundingBox.min.y;
 
             const xPos = boundingBox.min.x;
@@ -207,8 +288,7 @@ export class LabelLogic
             const width = maxX - minX;
             const triangleWidth = 10;//(maxX - minX) * 0.1; // Width of the triangle (10% of the width)
 
-            if (placement !== 0 && (side === "Top" || side === "Bottom"))
-            {
+            if (placement !== 0 && (side === "Top" || side === "Bottom")) {
                 //Start drawing the path
                 const nameplateCommands: PathCommand[] = [
                     [Command.MOVE, minX + radius, minY],
@@ -222,8 +302,7 @@ export class LabelLogic
                 ];
                 return nameplateCommands;
             }
-            else if (side === "Top")
-            {
+            else if (side === "Top") {
                 const nameplateCommands: PathCommand[] = [
                     [Command.MOVE, minX + radius, minY], // Move to the starting point on the left semi-circle
                     [Command.QUAD, minX, minY, minX, minY + radius], // Draw the left semi-circle
@@ -239,8 +318,7 @@ export class LabelLogic
                 ];
                 return nameplateCommands;
             }
-            else if (side === "Bottom")
-            {
+            else if (side === "Bottom") {
                 const nameplateCommands: PathCommand[] = [
                     [Command.MOVE, minX + radius, minY], // Move to the starting point on the left semi-circle
                     [Command.QUAD, minX, minY, minX, minY + radius], // Draw the left semi-circle
@@ -256,8 +334,7 @@ export class LabelLogic
                 ];
                 return nameplateCommands;
             }
-            else if (side === "Left")
-            {
+            else if (side === "Left") {
                 //Start drawing the path
                 const nameplateCommands: PathCommand[] = [
                     // Move to the starting point on the left semi-circle
@@ -276,8 +353,7 @@ export class LabelLogic
                 ];
                 return nameplateCommands;
             }
-            else
-            {
+            else {
                 //Start drawing the path
                 const nameplateCommands: PathCommand[] = [
                     [Command.MOVE, minX + radius, minY],
@@ -295,13 +371,11 @@ export class LabelLogic
             }
         }
 
-        function getTextWidth(text: string, fontSize: string): number
-        {
+        function getTextWidth(text: string, fontSize: string): number {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
 
-            if (!ctx)
-            {
+            if (!ctx) {
                 throw new Error("Canvas 2D context is not supported.");
             }
 
@@ -310,13 +384,11 @@ export class LabelLogic
             return textMetrics.width;
         }
 
-        function getTextHeight(text: string, fontSize: string): number
-        {
+        function getTextHeight(text: string, fontSize: string): number {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
 
-            if (!ctx)
-            {
+            if (!ctx) {
                 throw new Error("Canvas 2D context is not supported.");
             }
 

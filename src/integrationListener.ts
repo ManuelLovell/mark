@@ -32,7 +32,8 @@ export function InitiateListeners()
                         Color: isValidHexColor(transmitData.Color) ? transmitData.Color! : "#FFFFFF",
                         Group: "#1",
                         Name: transmitData.LabelName,
-                        Id: `TID-${transmitData.LabelName}`
+                        Id: `TID-${transmitData.LabelName}`,
+                        Counter: 0
                     };
 
                     // Try to find the existing one if it's there

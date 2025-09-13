@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "typescript": "^5.0.2",
-    "vite": "^4.3.9"
+    "vite": "^7.1.5"
   },
   "dependencies": {
     "@melloware/coloris": "^0.19.1",
