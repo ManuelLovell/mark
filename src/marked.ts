@@ -105,7 +105,6 @@ export async function Marked() {
         const patreonContainer = document.getElementById("patreonContainer")!;
         patreonContainer.appendChild(Utilities.GetPatreonButton());
         await SetupConfigAction();
-        InitiateListeners();
         CreateTooltips();
     }
     else {
@@ -113,6 +112,7 @@ export async function Marked() {
         await OBR.action.setHeight(70);
         await OBR.action.setWidth(150);
     }
+    InitiateListeners();
 
     // This is emoji preload.
     setTimeout(async () => {
