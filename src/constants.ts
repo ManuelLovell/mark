@@ -4,6 +4,16 @@ export class Constants {
     static EXTENSIONID = "com.battle-system.mark";
     static VERSION = "whatsnew-mark-141";
 
+    static USE_DIRECT_REGISTRATION_LOOKUP = true;
+    static USE_REGISTRATION_METRICS = true;
+    static REGISTRATION_METRICS_BATCH_SIZE = 25;
+    static REGISTRATION_METRICS_FLUSH_MS = 10000;
+    static REGISTRATION_LOOKUP_VIEW = 'bs_registration_status_public';
+    static REGISTRATION_CACHE_PREFIX = 'MARK_REGISTRATION';
+    static REGISTRATION_POSITIVE_TTL_MS = 12 * 60 * 60 * 1000;
+    static REGISTRATION_NEGATIVE_TTL_MS = 60 * 60 * 1000;
+    static REGISTRATION_ERROR_COOLDOWN_MS = 5 * 60 * 1000;
+
     static LABELSID = "com.battle-system.labels";
     static MARKCONNECT = "com.battle-system.marked-connect";
     static DICENOTATION = /(\d+)[dD](\d+)(.*)$/i;
