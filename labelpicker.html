@@ -6,18 +6,22 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Label Picker</title>
-  <script type="module" crossorigin src="/assets/labelpicker-BIg1FTcc.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/style-DVsrkPXL.js">
-  <link rel="stylesheet" crossorigin href="/assets/style-BMQPf_g0.css">
+  <script type="module" crossorigin src="/assets/labelpicker-Bh8Tjtkt.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/style-CZsE4LkQ.js">
+  <link rel="stylesheet" crossorigin href="/assets/style-DFa9-KUo.css">
 </head>
 
 <body>
     <div id="submenu">
-        <div id="label-list1" class="btn-group"></div>
-        <div id="label-list2" class="btn-group"></div>
-        <div id="label-list3" class="btn-group"></div>
-    </div>
-    <div class="footered">
+        <aside id="picker-sidebar" aria-label="Groups">
+            <div id="picker-tabs" class="picker-icon-tabs"></div>
+        </aside>
+        <section id="picker-main">
+            <div class="picker-search-row">
+                <input id="pickerFilter" type="search" placeholder="Search or filter labels" aria-label="Search or filter labels">
+            </div>
+            <div id="picker-list" class="btn-group"></div>
+        </section>
     </div>
 </body>
 
