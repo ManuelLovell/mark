@@ -641,7 +641,7 @@ option {
 }
 
 #picker-sidebar {
-    width: 50px;
+    width: 56px;
     border-right: 1px solid var(--soft-outline);
     padding: 4px;
     box-sizing: border-box;
@@ -672,11 +672,14 @@ option {
     height: 28px;
     padding: 0 8px;
 }
+#picker-tabs {
+    overflow-x: hidden;
+}
 
 .picker-icon-tabs {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
     height: 100%;
     overflow-y: auto;
     scrollbar-width: thin;
@@ -693,7 +696,7 @@ option {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    padding: 6px;
 }
 
 .picker-group-tab:hover,
@@ -804,7 +807,7 @@ option {
     }
 
     #picker-sidebar {
-        width: 44px;
+        width: 56px;
     }
 
     .picker-group-tab {
