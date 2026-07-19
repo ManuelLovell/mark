@@ -147,7 +147,7 @@ export class LabelLogic {
             if (labelData.Counter === 1) {
                 // Sub nameplate size and position
                 const SUB_WIDTH = 100;
-                const SUB_HEIGHT = labelBounds.max.y - labelBounds.min.y;
+                const SUB_HEIGHT = 52;
                 let subPlatePos = { ...label.position };
                 // Adjust position based on direction
                 if (labelData.Direction === "Right" || labelData.Direction === "Top") {
@@ -221,7 +221,7 @@ export class LabelLogic {
             counterText.type = "TEXT"; // Set Item Type
             counterText.text.type = "PLAIN";
             counterText.text.style.fontWeight = 600;
-            counterText.text.style.fontSize = FONTSIZE;
+            counterText.text.style.fontSize = 32;
             counterText.text.style.textAlign = "CENTER";
             counterText.text.style.fontFamily = "Roboto";
 

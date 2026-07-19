@@ -10,11 +10,15 @@
 
 <body>
     <div id="submenu">
-        <div id="label-list1" class="btn-group"></div>
-        <div id="label-list2" class="btn-group"></div>
-        <div id="label-list3" class="btn-group"></div>
-    </div>
-    <div class="footered">
+        <aside id="picker-sidebar" aria-label="Groups">
+            <div id="picker-tabs" class="picker-icon-tabs"></div>
+        </aside>
+        <section id="picker-main">
+            <div class="picker-search-row">
+                <input id="pickerFilter" type="search" placeholder="Search or filter labels" aria-label="Search or filter labels">
+            </div>
+            <div id="picker-list" class="btn-group"></div>
+        </section>
     </div>
     <script type="module" src="/src/labelpicker.ts"></script>
 </body>

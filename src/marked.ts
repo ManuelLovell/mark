@@ -1,120 +1,147 @@
 import OBR, { buildText, Item, Metadata, Text } from '@owlbear-rodeo/sdk';
+import { createElement, Tag, Shield, Bolt, Star, Skull, Heart, Plus, X, Settings2, Zap, Flame, SunMedium, MoonStar, Sparkles, Gem, CircleAlert, TriangleAlert, Ghost, Crown, Sword, Compass } from 'lucide';
 import { setupContextMenu } from './contextMenu';
-import { GetGUID, HexToRgb, RgbToHex } from './utilities';
+import { GetGUID } from './utilities';
 import { Constants } from './constants';
 import { InitiateListeners } from './integrationListener';
 import { CreateTooltips } from './bsTooltips';
 import * as Utilities from './utilities';
-import Coloris from "@melloware/coloris";
-import "@melloware/coloris/dist/coloris.css";
 import './style.css'
 
-//region Coloris Initialization
-Coloris.init();
-Coloris.coloris({
-    el: ".coloris",
-    alpha: false,
-    format: 'hex',
-    wrap: true,
-    theme: 'polaroid',
-    themeMode: "light",
-    swatches: [
-        'red',
-        'yellow',
-        'green',
-        'cyan',
-        'blue',
-        'purple',
-    ],
-    onChange: () => {
-    }
-});
-Coloris.close();
-//#endregion
+type ViewMode = "group" | "settings";
 
-// Table Constants
-const loadingApp = <HTMLDivElement>document.getElementById("loadingApp")!;
-const labelApp = <HTMLDivElement>document.getElementById("labelApp")!;
-const table = <HTMLTableElement>document.getElementById("label-list")!;
-const headerRow = <HTMLTableCellElement>document.getElementById("labelSort")!;
-let sortAscending = true;
+type GroupIcon = {
+    key: string;
+    label: string;
+    icon: typeof Tag;
+};
 
-// Document Constants
-const mainButtonContainer = <HTMLButtonElement>document.getElementById("mainButtons")!;
-const groupOne = <HTMLInputElement>document.getElementById("gr1n")!;
-const groupTwo = <HTMLInputElement>document.getElementById("gr2n")!;
-const groupThree = <HTMLInputElement>document.getElementById("gr3n")!;
-const distance = <HTMLInputElement>document.getElementById("distance")!;
-const opacity = <HTMLInputElement>document.getElementById("opacity")!;
-const strokewidth = <HTMLInputElement>document.getElementById("stroke")!;
+const MAX_GROUPS = 10;
+const NAME_MAX_LENGTH = 30;
+const DEFAULT_GROUP_ICON = "tag";
+const DEFAULT_GROUP_COLOR = "#ffffff";
+
+const GROUP_ICONS: GroupIcon[] = [
+    { key: "tag", label: "Tag", icon: Tag },
+    { key: "shield", label: "Shield", icon: Shield },
+    { key: "bolt", label: "Bolt", icon: Bolt },
+    { key: "star", label: "Star", icon: Star },
+    { key: "skull", label: "Skull", icon: Skull },
+    { key: "heart", label: "Heart", icon: Heart },
+    { key: "plus", label: "Plus", icon: Plus },
+    { key: "x", label: "X", icon: X },
+    { key: "settings-2", label: "Settings", icon: Settings2 },
+    { key: "zap", label: "Zap", icon: Zap },
+    { key: "flame", label: "Flame", icon: Flame },
+    { key: "sun-medium", label: "Sun", icon: SunMedium },
+    { key: "moon-star", label: "Moon Star", icon: MoonStar },
+    { key: "sparkles", label: "Sparkles", icon: Sparkles },
+    { key: "gem", label: "Gem", icon: Gem },
+    { key: "circle-alert", label: "Alert", icon: CircleAlert },
+    { key: "triangle-alert", label: "Warning", icon: TriangleAlert },
+    { key: "ghost", label: "Ghost", icon: Ghost },
+    { key: "crown", label: "Crown", icon: Crown },
+    { key: "sword", label: "Sword", icon: Sword },
+    { key: "compass", label: "Compass", icon: Compass },
+];
+
+const loadingApp = document.getElementById("loadingApp") as HTMLDivElement;
+const labelApp = document.getElementById("labelApp") as HTMLDivElement;
+const groupTabs = document.getElementById("groupTabs") as HTMLDivElement;
+const settingsTab = document.getElementById("settingsTab") as HTMLButtonElement;
+const groupPanel = document.getElementById("groupPanel") as HTMLDivElement;
+const settingsPanel = document.getElementById("settingsPanel") as HTMLDivElement;
+const groupNameInput = document.getElementById("groupNameInput") as HTMLInputElement;
+const groupIconSelect = document.getElementById("groupIconSelect") as HTMLSelectElement;
+const groupIconColorInput = document.getElementById("groupIconColorInput") as HTMLInputElement;
+const removeGroupButton = document.getElementById("removeGroupButton") as HTMLButtonElement;
+const labelTableBody = document.getElementById("label-list") as HTMLTableSectionElement;
+const labelSort = document.getElementById("labelSort") as HTMLTableCellElement;
+const mainButtonContainer = document.getElementById("mainButtons") as HTMLDivElement;
+const topRightActionContainer = document.getElementById("patreonContainer") as HTMLDivElement;
+const workspaceShell = document.getElementById("workspaceShell") as HTMLDivElement;
+const sidebarScrim = document.getElementById("sidebarScrim") as HTMLDivElement;
+const distance = document.getElementById("distance") as HTMLInputElement;
+const opacity = document.getElementById("opacity") as HTMLInputElement;
+const strokeWidth = document.getElementById("stroke") as HTMLInputElement;
+const groupDistance = document.getElementById("groupDistance") as HTMLInputElement;
+const groupOpacity = document.getElementById("groupOpacity") as HTMLInputElement;
+const groupStroke = document.getElementById("groupStroke") as HTMLInputElement;
+const clearGroupDistance = document.getElementById("clearGroupDistance") as HTMLButtonElement;
+const clearGroupOpacity = document.getElementById("clearGroupOpacity") as HTMLButtonElement;
+const clearGroupStroke = document.getElementById("clearGroupStroke") as HTMLButtonElement;
+const fileButton = document.getElementById("fileButton") as HTMLInputElement;
+
 let sceneItemsCache: Item[] = [];
+let sortAscending = true;
+let mode: ViewMode = "group";
+let groups: IGroup[] = [];
+let labels: ILabelData[] = [];
+let activeGroupNum = "#1";
+let hoverOverlayCloseTimer: number | undefined;
 
 export async function Marked() {
     setupContextMenu();
 
-    // Set theme accordingly
     const theme = await OBR.theme.getTheme();
     Utilities.SetThemeMode(theme, document);
-    OBR.theme.onChange((theme) => {
-        Utilities.SetThemeMode(theme, document);
+    OBR.theme.onChange((newTheme) => {
+        Utilities.SetThemeMode(newTheme, document);
     });
 
-    // Selection Change Check
     sceneItemsCache = await OBR.scene.items.getItems();
     OBR.scene.items.onChange((items) => {
         sceneItemsCache = items;
     });
 
     OBR.player.onChange(async (player) => {
-        if (player.selection?.length === 1) {
-            const selectedItemId = player.selection[0];
-            const itemFound = sceneItemsCache.find(x => x.id === selectedItemId 
-                && (x.metadata[`${Constants.EXTENSIONID}/addId`] !== undefined
-                    || x.metadata[`${Constants.EXTENSIONID}/minusId`] !== undefined
-                ));
-            if (itemFound) {
-                if (sceneItemsCache.length === 0) {
-                    sceneItemsCache = await OBR.scene.items.getItems();
+        if (player.selection?.length !== 1) return;
+
+        const selectedItemId = player.selection[0];
+        const itemFound = sceneItemsCache.find((x) => x.id === selectedItemId
+            && (x.metadata[`${Constants.EXTENSIONID}/addId`] !== undefined
+                || x.metadata[`${Constants.EXTENSIONID}/minusId`] !== undefined));
+
+        if (!itemFound) return;
+
+        if (sceneItemsCache.length === 0) {
+            sceneItemsCache = await OBR.scene.items.getItems();
+        }
+
+        const currentCountItem = sceneItemsCache.find((x) => itemFound.attachedTo === x.metadata[`${Constants.EXTENSIONID}/counterId`]);
+        if (!currentCountItem) return;
+
+        let currentCount = parseInt((currentCountItem as Text).text.plainText);
+        currentCount = (itemFound.metadata[`${Constants.EXTENSIONID}/addId`] !== undefined) ? currentCount + 1 : currentCount - 1;
+
+        if (currentCount === 0 && currentCountItem.attachedTo) {
+            await OBR.scene.items.deleteItems([currentCountItem.attachedTo]);
+        }
+        else {
+            if (currentCount > 9) currentCount = 9;
+            await OBR.scene.items.updateItems<Text>([currentCountItem.id], (counts) => {
+                for (const count of counts) {
+                    count.text.plainText = currentCount.toString();
                 }
-                const currentCountItem = sceneItemsCache.find(x => itemFound.attachedTo === x.metadata[`${Constants.EXTENSIONID}/counterId`]);
-                if (currentCountItem)
-                {
-                    let currentCount = currentCountItem ? parseInt((currentCountItem as Text).text.plainText) : 1;
-                    currentCount = (itemFound.metadata[`${Constants.EXTENSIONID}/addId`] !== undefined) ? currentCount + 1 : currentCount - 1;
-                    if (currentCount === 0 && currentCountItem.attachedTo) {
-                        await OBR.scene.items.deleteItems([currentCountItem.attachedTo]);
-                    }
-                    else {
-                        if (currentCount > 9) currentCount = 9;
-                        await OBR.scene.items.updateItems<Text>([currentCountItem.id], (counts) => {
-                            for (let count of counts) {
-                                count.text.plainText = currentCount.toString();
-                            }
-                        })
-                        OBR.player.deselect([itemFound.id])
-                    }
-                }
-            };
+            });
+            OBR.player.deselect([itemFound.id]);
         }
     });
 
-    // Add GM CHECK //
     const role = await OBR.player.getRole();
     if (role === "GM") {
         await Utilities.CheckRegistration();
-        const patreonContainer = document.getElementById("patreonContainer")!;
-        patreonContainer.appendChild(Utilities.GetPatreonButton());
         await SetupConfigAction();
         CreateTooltips();
     }
     else {
-        loadingApp.innerHTML = `<div class="player-view">Configuration is GM-Access only.</div>`;
+        loadingApp.innerHTML = "<div class='player-view'>Configuration is GM-Access only.</div>";
         await OBR.action.setHeight(70);
         await OBR.action.setWidth(150);
     }
+
     InitiateListeners();
 
-    // This is emoji preload.
     setTimeout(async () => {
         const label = buildText()
             .fillColor("black")
@@ -124,466 +151,654 @@ export async function Marked() {
             .strokeColor("white")
             .strokeOpacity(0)
             .build();
+
         label.position = { x: -5000, y: -5000 };
-        label.visible = false; // Set Visibility
-        label.locked = true; // Set Lock, Don't want people to touch
+        label.visible = false;
+        label.locked = true;
         label.disableHit = true;
-        label.type = "TEXT"; // Set Item Type
+        label.type = "TEXT";
         label.text.type = "PLAIN";
         label.text.style.fontWeight = 100;
         label.text.style.fontSize = 12;
         label.text.style.textAlign = "CENTER";
         label.text.style.fontFamily = "Roboto";
-        await OBR.scene.items.addItems([label]);
 
+        await OBR.scene.items.addItems([label]);
         await OBR.scene.items.getItemBounds([label.id]);
 
         setTimeout(async () => {
             await OBR.scene.items.deleteItems([label.id]);
-        }, (1000));
-    }, (1000));
-};
-
-/** Add row to table one */
-function AddToGroup(label?: ILabelData) {
-    const row = table.insertRow(0);
-    row.className = "data-row";
-    row.id = GetGUID();
-
-    const checkbox = row.insertCell(0);
-    checkbox.innerHTML = `<input id="checkbox_${row.id}" type="checkbox" ${label?.Active === 0 ? "" : "checked"}/>`;
-
-    const name = row.insertCell(1);
-    name.id = "name_" + row.id;
-    name.setAttribute("contenteditable", "true");
-    name.innerHTML = label ? label.Name : "Default Name";
-
-    const group = row.insertCell(2);
-    group.className = "center";
-    const groupSelect = CreateGroupDropDown();
-    groupSelect.value = label ? label.Group : "#1";
-    groupSelect.id = "group_" + row.id;
-    group.appendChild(groupSelect);
-
-    const direction = row.insertCell(3);
-    direction.className = "center";
-    const selector = CreateDirectionDropDown();
-    selector.value = label ? label.Direction : "Top";
-    selector.id = "selector_" + row.id;
-    direction.appendChild(selector);
-
-    const color = row.insertCell(4);
-    color.id = row.id;
-    color.className = "center";
-
-    const counterBox = row.insertCell(5);
-    counterBox.innerHTML = `<input id="counter${row.id}" type="checkbox" ${label?.Counter === 1 ? "checked" : ""}/>`;
-
-    const rgbColorString = label ? HexToRgb(label.Color) : undefined;
-    color.appendChild(AddColorisInput(color.id, rgbColorString));
+        }, 1000);
+    }, 1000);
 }
 
-/** Create the Coloris Color Picker Swatch */
-function AddColorisInput(elementId: string, color?: string): HTMLDivElement {
-    const divElement = document.createElement('div');
-    const buttonElement = document.createElement('button');
-
-    buttonElement.setAttribute('aria-labelledby', 'clr-open-label');
-    buttonElement.id = 'clr-button_' + elementId;
-
-    divElement.className = 'clr-field';
-    divElement.id = 'clr-field_' + elementId;
-    divElement.style.color = color ? 'rgb' + color : 'rgb(0, 0, 0)';
-    divElement.appendChild(buttonElement);
-
-    const input = <HTMLInputElement>document.createElement('input');
-    input.type = 'text';
-    input.id = 'clr-input_' + elementId;
-    input.style.width = "20px";
-    input.className = 'coloris';
-    input.setAttribute("data-coloris", "");
-    divElement.appendChild(input);
-    return divElement;
+function getDefaultGroups(): IGroup[] {
+    return Constants.DEFAULTGROUP.map((name, index) => ({
+        Num: `#${index + 1}`,
+        Name: name,
+        Icon: GROUP_ICONS[index]?.key ?? DEFAULT_GROUP_ICON,
+        IconColor: DEFAULT_GROUP_COLOR,
+    }));
 }
 
-/** Create the dropdown list to select the label alignment */
-function CreateDirectionDropDown(): HTMLSelectElement {
-    const selector = <HTMLSelectElement>document.createElement('select');
-    selector.className = "directionSelect";
+function normalizeGroups(source?: IGroup[]): IGroup[] {
+    const defaults = getDefaultGroups();
+    if (!source || source.length === 0) return defaults;
 
-    const directions = ["Top", "Bottom", "Left", "Right"];
-    directions.forEach((direction) => {
-        const option = document.createElement("option");
-        option.setAttribute('value', direction);
-        const text = document.createTextNode(direction);
-        option.appendChild(text);
+    const normalized = source
+        .slice(0, MAX_GROUPS)
+        .map((group, index) => ({
+            Num: group.Num || `#${index + 1}`,
+            Name: (group.Name || `Group ${index + 1}`).trim().slice(0, NAME_MAX_LENGTH),
+            Icon: group.Icon || GROUP_ICONS[index % GROUP_ICONS.length].key,
+            IconColor: group.IconColor || DEFAULT_GROUP_COLOR,
+            TextSizeOverride: group.TextSizeOverride,
+            BgOpacityOverride: group.BgOpacityOverride,
+            OutlineStrokeOverride: group.OutlineStrokeOverride,
+        }));
 
-        selector.appendChild(option);
-    });
-
-    return selector;
+    if (normalized.length === 0) return defaults;
+    return normalized;
 }
 
-function CreateGroupDropDown(): HTMLSelectElement {
-    const selector = <HTMLSelectElement>document.createElement('select');
-    selector.className = "groupSelect";
+function ensureLabelsBoundToGroups(): void {
+    const validGroups = new Set(groups.map((group) => group.Num));
+    const fallback = groups[0]?.Num ?? "#1";
 
-    const groups = ["#1", "#2", "#3"];
-    groups.forEach((group) => {
-        const option = document.createElement("option");
-        option.setAttribute('value', group);
-        const text = document.createTextNode(group);
-        option.appendChild(text);
-
-        selector.appendChild(option);
-    });
-
-    return selector;
-}
-
-async function ExportData(): Promise<void> {
-    const content = GetSaveData();
-
-    var a = document.createElement("a");
-    var file = new Blob([JSON.stringify(content)], { type: "text/plain" });
-    a.href = URL.createObjectURL(file);
-    a.download = `MarkedExport-${Date.now()}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
-
-async function ImportData(saveData: ISaveData): Promise<void> {
-    if (saveData && saveData.Labels?.length > 0) {
-        const labelTable = document.getElementById("label-list")!;
-        labelTable.innerHTML = "";
-        saveData.Labels.forEach((label) => {
-            AddToGroup(label);
-        });
-        saveData.Groups.forEach((group) => {
-            switch (group.Num) {
-                case '#1':
-                    groupOne.value = group.Name;
-                    break;
-                case '#2':
-                    groupTwo.value = group.Name;
-                    break;
-                case '#3':
-                    groupThree.value = group.Name;
-                    break;
-                default:
-                    throw new Error('Invalid Group');
-            }
-        });
-        distance.value = saveData.Distance;
-        opacity.value = saveData.Opacity;
+    for (const label of labels) {
+        if (!validGroups.has(label.Group)) {
+            label.Group = fallback;
+        }
     }
-    await Save();
 }
 
-/** Save the current label setup to room metadata */
-async function Save(): Promise<void> {
-    const saveData = GetSaveData();
+function normalizeLabelNames(source: ILabelData[]): ILabelData[] {
+    return source.map((label) => ({
+        ...label,
+        Name: (label.Name || "Unnamed Label").trim().slice(0, NAME_MAX_LENGTH) || "Unnamed Label",
+    }));
+}
 
-    let markMeta: Metadata = {};
+function createLabelForGroup(groupNum: string): ILabelData {
+    return {
+        Id: GetGUID(),
+        Active: 1,
+        Name: "New Label",
+        Direction: "Top",
+        Color: "#ffffff",
+        Group: groupNum,
+        Counter: 0,
+    };
+}
+
+function getActiveGroup(): IGroup | undefined {
+    return groups.find((group) => group.Num === activeGroupNum);
+}
+
+function setButtonIcon(button: HTMLElement, icon: typeof Tag): void {
+    const iconSlot = button.querySelector<HTMLElement>(".tab-icon, .delete-icon");
+    if (!iconSlot) return;
+
+    iconSlot.replaceChildren(createElement(icon));
+}
+
+function openSidebarOverlay(): void {
+    if (hoverOverlayCloseTimer !== undefined) {
+        window.clearTimeout(hoverOverlayCloseTimer);
+        hoverOverlayCloseTimer = undefined;
+    }
+
+    workspaceShell.classList.add("sidebar-open");
+    sidebarScrim.setAttribute("data-visible", "true");
+}
+
+function closeSidebarOverlay(): void {
+    if (hoverOverlayCloseTimer !== undefined) {
+        window.clearTimeout(hoverOverlayCloseTimer);
+    }
+
+    hoverOverlayCloseTimer = window.setTimeout(() => {
+        const anyHovering = groupTabs.querySelector(":scope .group-tab:hover") !== null || settingsTab.matches(":hover");
+        if (anyHovering) return;
+
+        workspaceShell.classList.remove("sidebar-open");
+        sidebarScrim.removeAttribute("data-visible");
+        hoverOverlayCloseTimer = undefined;
+    }, 20);
+}
+
+function renderGroupIconOptions(): void {
+    groupIconSelect.innerHTML = "";
+    GROUP_ICONS.forEach((icon) => {
+        const option = document.createElement("option");
+        option.value = icon.key;
+        option.textContent = icon.label;
+        groupIconSelect.appendChild(option);
+    });
+}
+
+function renderSidebar(): void {
+    groupTabs.innerHTML = "";
+
+    const addGroupButton = document.createElement("button");
+    addGroupButton.type = "button";
+    addGroupButton.id = "addGroupButton";
+    addGroupButton.className = "group-tab add-group-tab";
+    addGroupButton.title = "Add Group";
+    addGroupButton.innerHTML = `<span class="tab-icon"></span><span class="tab-name">Add Group</span>`;
+    setButtonIcon(addGroupButton, Plus);
+    addGroupButton.onclick = () => addGroup();
+    addGroupButton.addEventListener("pointerenter", openSidebarOverlay);
+    addGroupButton.addEventListener("pointerleave", closeSidebarOverlay);
+    groupTabs.appendChild(addGroupButton);
+
+    groups.forEach((group) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `group-tab ${mode === "group" && group.Num === activeGroupNum ? "active" : ""}`;
+        button.title = group.Name;
+        button.dataset.group = group.Num;
+
+        const iconWrap = document.createElement("span");
+        iconWrap.className = "tab-icon";
+        iconWrap.style.color = group.IconColor || DEFAULT_GROUP_COLOR;
+        const groupIcon = GROUP_ICONS.find((item) => item.key === group.Icon) ?? GROUP_ICONS[0];
+        iconWrap.appendChild(createElement(groupIcon.icon));
+
+        const nameWrap = document.createElement("span");
+        nameWrap.className = "tab-name";
+        nameWrap.textContent = group.Name;
+
+        button.appendChild(iconWrap);
+        button.appendChild(nameWrap);
+        button.addEventListener("pointerenter", openSidebarOverlay);
+        button.addEventListener("pointerleave", closeSidebarOverlay);
+        button.onclick = () => {
+            mode = "group";
+            activeGroupNum = group.Num;
+            renderView();
+        };
+
+        groupTabs.appendChild(button);
+    });
+
+    settingsTab.classList.toggle("active", mode === "settings");
+    setButtonIcon(settingsTab, Settings2);
+    settingsTab.onpointerenter = openSidebarOverlay;
+    settingsTab.onpointerleave = closeSidebarOverlay;
+}
+
+function renderGroupPanel(): void {
+    const active = getActiveGroup();
+    if (!active) return;
+
+    groupNameInput.value = active.Name;
+    groupIconSelect.value = active.Icon || DEFAULT_GROUP_ICON;
+    groupIconColorInput.value = active.IconColor || DEFAULT_GROUP_COLOR;
+    groupDistance.value = active.TextSizeOverride || distance.value;
+    groupOpacity.value = active.BgOpacityOverride || opacity.value;
+    groupStroke.value = active.OutlineStrokeOverride || strokeWidth.value;
+    removeGroupButton.disabled = groups.length <= 1;
+
+    renderLabelsTable();
+}
+
+function sortActiveGroupLabels(): void {
+    const active = activeGroupNum;
+    const grouped = labels.filter((label) => label.Group === active);
+    grouped.sort((a, b) => {
+        const aName = a.Name.toLowerCase();
+        const bName = b.Name.toLowerCase();
+        if (aName === bName) return 0;
+        if (sortAscending) return aName > bName ? 1 : -1;
+        return aName < bName ? 1 : -1;
+    });
+
+    const remainder = labels.filter((label) => label.Group !== active);
+    labels = [...remainder, ...grouped];
+    sortAscending = !sortAscending;
+    renderLabelsTable();
+}
+
+function renderLabelsTable(): void {
+    const currentGroupLabels = labels.filter((label) => label.Group === activeGroupNum);
+    labelTableBody.innerHTML = "";
+
+    currentGroupLabels.forEach((label) => {
+        const row = document.createElement("tr");
+        row.className = "data-row";
+        row.dataset.labelId = label.Id;
+
+        const activeCell = document.createElement("td");
+        activeCell.className = "center";
+        const activeInput = document.createElement("input");
+        activeInput.type = "checkbox";
+        activeInput.className = "table-toggle";
+        activeInput.checked = label.Active === 1;
+        activeInput.onchange = () => {
+            label.Active = activeInput.checked ? 1 : 0;
+        };
+        activeCell.appendChild(activeInput);
+
+        const nameCell = document.createElement("td");
+        nameCell.contentEditable = "true";
+        nameCell.innerText = label.Name;
+        nameCell.onblur = () => {
+            const nextName = nameCell.innerText.trim().slice(0, NAME_MAX_LENGTH);
+            label.Name = nextName.length > 0 ? nextName : "Unnamed Label";
+            nameCell.innerText = label.Name;
+        };
+
+        const directionCell = document.createElement("td");
+        directionCell.className = "center";
+        const directionSelect = document.createElement("select");
+        directionSelect.className = "directionSelect";
+        ["Top", "Bottom", "Left", "Right"].forEach((direction) => {
+            const option = document.createElement("option");
+            option.value = direction;
+            option.textContent = direction;
+            directionSelect.appendChild(option);
+        });
+        directionSelect.value = label.Direction;
+        directionSelect.onchange = () => {
+            label.Direction = directionSelect.value;
+        };
+        directionCell.appendChild(directionSelect);
+
+        const colorCell = document.createElement("td");
+        colorCell.className = "center";
+        const colorInput = document.createElement("input");
+        colorInput.type = "color";
+        colorInput.className = "label-color-input";
+        colorInput.value = label.Color || "#ffffff";
+        colorInput.oninput = () => {
+            label.Color = colorInput.value;
+        };
+        colorCell.appendChild(colorInput);
+
+        const counterCell = document.createElement("td");
+        counterCell.className = "center";
+        const counterInput = document.createElement("input");
+        counterInput.type = "checkbox";
+        counterInput.className = "table-toggle";
+        counterInput.checked = label.Counter === 1;
+        counterInput.onchange = () => {
+            label.Counter = counterInput.checked ? 1 : 0;
+        };
+        counterCell.appendChild(counterInput);
+
+        row.append(activeCell, nameCell, directionCell, colorCell, counterCell);
+        row.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+            const confirmDelete = window.confirm(`Are you sure you want to delete ${label.Name}?`);
+            if (!confirmDelete) return;
+            labels = labels.filter((existingLabel) => existingLabel.Id !== label.Id);
+            renderLabelsTable();
+        });
+
+        labelTableBody.appendChild(row);
+    });
+
+    const addRow = document.createElement("tr");
+    addRow.className = "add-label-row";
+    const addCell = document.createElement("td");
+    addCell.colSpan = 5;
+
+    const addButton = document.createElement("button");
+    addButton.id = "addLabelButton";
+    addButton.type = "button";
+    addButton.className = "add-label-button";
+    addButton.textContent = "Add New Label";
+    addButton.onclick = () => {
+        labels.push(createLabelForGroup(activeGroupNum));
+        renderLabelsTable();
+    };
+
+    addCell.appendChild(addButton);
+    addRow.appendChild(addCell);
+    labelTableBody.appendChild(addRow);
+}
+
+function renderView(): void {
+    renderSidebar();
+
+    if (mode === "settings") {
+        groupPanel.style.display = "none";
+        settingsPanel.style.display = "";
+        return;
+    }
+
+    groupPanel.style.display = "";
+    settingsPanel.style.display = "none";
+    renderGroupPanel();
+}
+
+function validateRangeInput(sender: HTMLInputElement): void {
+    const min = parseInt(sender.min);
+    const max = parseInt(sender.max);
+    const value = parseInt(sender.value);
+
+    if (Number.isNaN(value)) {
+        sender.value = sender.min;
+        return;
+    }
+
+    if (value > max) sender.value = sender.max;
+    if (value < min) sender.value = sender.min;
+}
+
+function getSaveData(): ISaveData {
+    return {
+        Groups: groups,
+        Labels: labels,
+        Distance: distance.value,
+        Opacity: opacity.value,
+        Stroke: strokeWidth.value,
+    };
+}
+
+async function Save(): Promise<void> {
+    const saveData = getSaveData();
+    const markMeta: Metadata = {};
     markMeta[`${Constants.EXTENSIONID}/metadata_marks`] = { saveData };
     await OBR.room.setMetadata(markMeta);
 }
 
-function GetSaveData(): ISaveData {
-    const labels: ILabelData[] = [];
-    const groups: IGroup[] = [];
-    const distanceNumber = distance.value;
-    const opacityNumber = opacity.value;
-    const strokeNumber = strokewidth.value;
-
-    var table = <HTMLTableElement>document.getElementById("label-list");
-    for (var i = 0, row: HTMLTableRowElement; row = table.rows[i]; i++) {
-        const id = row.id;
-        const checkbox = <HTMLInputElement>row.querySelector(`#checkbox_` + id);
-        const name = <HTMLTableCellElement>row.querySelector(`#name_` + id);
-        const direction = <HTMLSelectElement>row.querySelector(`#selector_` + id);
-        const group = <HTMLSelectElement>row.querySelector(`#group_` + id);
-        const color = <HTMLDivElement>row.querySelector(`#clr-field_` + id);
-        const countbox = <HTMLInputElement>row.querySelector(`#counter` + id);
-        const hexColor = RgbToHex(color.style.color)!;
-        const label: ILabelData =
-        {
-            Id: id,
-            Active: checkbox.checked ? 1 : 0,
-            Name: name.innerText.trim(),
-            Direction: direction.value,
-            Color: hexColor,
-            Group: group.value,
-            Counter: countbox.checked ? 1 : 0,
-        };
-        labels.push(label);
-    }
-
-    groups.push({ Name: groupOne.value, Num: "#1" });
-    groups.push({ Name: groupTwo.value, Num: "#2" });
-    groups.push({ Name: groupThree.value, Num: "#3" });
-
-    return { Groups: groups, Labels: labels.reverse(), Distance: distanceNumber, Opacity: opacityNumber, Stroke: strokeNumber };
+async function ExportData(): Promise<void> {
+    const content = getSaveData();
+    const anchor = document.createElement("a");
+    const file = new Blob([JSON.stringify(content)], { type: "text/plain" });
+    anchor.href = URL.createObjectURL(file);
+    anchor.download = `MarkedExport-${Date.now()}`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
 }
 
-/**Set the metadata back to defaults */
-async function Reset(): Promise<void> {
-    if (confirm("Erase everything and go back to default labels?")) {
-        table.innerHTML = "";
-        await LoadDefaults();
-    }
-}
+async function ImportData(saveData: ISaveData): Promise<void> {
+    groups = normalizeGroups(saveData.Groups);
+    labels = saveData.Labels?.length > 0
+        ? normalizeLabelNames(saveData.Labels)
+        : normalizeLabelNames(Constants.DEFAULTSET.map((label) => ({ ...label })));
+    ensureLabelsBoundToGroups();
 
-async function LoadDefaults(): Promise<void> {
-    groupOne.value = Constants.DEFAULTGROUP[0];
-    groupTwo.value = Constants.DEFAULTGROUP[1];
-    groupThree.value = Constants.DEFAULTGROUP[2];
-    distance.value = Constants.DEFAULTFONTSIZE;
-    opacity.value = Constants.DEFAULTOPACITY;
-    strokewidth.value = Constants.DEFAULTSTROKE;
+    activeGroupNum = groups[0].Num;
+    distance.value = saveData.Distance || Constants.DEFAULTFONTSIZE;
+    opacity.value = saveData.Opacity || Constants.DEFAULTOPACITY;
+    strokeWidth.value = saveData.Stroke || Constants.DEFAULTSTROKE;
 
-    // Load defaults
-    Constants.DEFAULTSET.forEach((label) => {
-        AddToGroup(label);
-    });
+    renderView();
     await Save();
 }
 
-async function SetupConfigAction(): Promise<void> {
-    const roomsLabels = await OBR.room.getMetadata();
-    const meta = roomsLabels[`${Constants.EXTENSIONID}/metadata_marks`] as any;
-    const saveData = meta?.saveData as ISaveData;
-    if (saveData && saveData.Labels?.length > 0) {
-        saveData.Labels.forEach((label) => {
-            AddToGroup(label);
-        });
-        saveData.Groups.forEach((group) => {
-            switch (group.Num) {
-                case '#1':
-                    groupOne.value = group.Name;
-                    break;
-                case '#2':
-                    groupTwo.value = group.Name;
-                    break;
-                case '#3':
-                    groupThree.value = group.Name;
-                    break;
-                default:
-                    throw new Error('Invalid Group');
-            }
-        });
-    }
-    else {
-        await LoadDefaults();
+async function LoadDefaults(): Promise<void> {
+    groups = getDefaultGroups();
+    labels = normalizeLabelNames(Constants.DEFAULTSET.map((label) => ({ ...label })));
+    activeGroupNum = groups[0].Num;
+    distance.value = Constants.DEFAULTFONTSIZE;
+    opacity.value = Constants.DEFAULTOPACITY;
+    strokeWidth.value = Constants.DEFAULTSTROKE;
+
+    renderView();
+    await Save();
+}
+
+async function Reset(): Promise<void> {
+    if (!confirm("Erase everything and go back to default labels?")) return;
+    await LoadDefaults();
+}
+
+function addGroup(): void {
+    if (groups.length >= MAX_GROUPS) {
+        OBR.notification.show("A maximum of 10 groups is allowed.", "WARNING");
+        return;
     }
 
-    ///Setup Distance Configuration
+    let slot = 1;
+    while (groups.some((group) => group.Num === `#${slot}`) && slot <= MAX_GROUPS) {
+        slot += 1;
+    }
+
+    const newGroup: IGroup = {
+        Num: `#${slot}`,
+        Name: `Group ${groups.length + 1}`,
+        Icon: GROUP_ICONS[groups.length % GROUP_ICONS.length].key,
+        IconColor: DEFAULT_GROUP_COLOR,
+    };
+
+    groups.push(newGroup);
+    activeGroupNum = newGroup.Num;
+    mode = "group";
+    renderView();
+}
+
+function removeGroup(): void {
+    if (groups.length <= 1) {
+        OBR.notification.show("At least one group is required.", "WARNING");
+        return;
+    }
+
+    const active = getActiveGroup();
+    if (!active) return;
+
+    const confirmDelete = window.confirm(`Delete group \"${active.Name}\" and move its labels to the first group?`);
+    if (!confirmDelete) return;
+
+    const fallback = groups.find((group) => group.Num !== active.Num);
+    if (!fallback) return;
+
+    labels.forEach((label) => {
+        if (label.Group === active.Num) {
+            label.Group = fallback.Num;
+        }
+    });
+
+    groups = groups.filter((group) => group.Num !== active.Num);
+    activeGroupNum = fallback.Num;
+    renderView();
+}
+
+async function SetupConfigAction(): Promise<void> {
+    renderGroupIconOptions();
+
+    const roomLabels = await OBR.room.getMetadata();
+    const meta = roomLabels[`${Constants.EXTENSIONID}/metadata_marks`] as { saveData?: ISaveData } | undefined;
+    const saveData = meta?.saveData;
+
+    if (saveData && saveData.Labels?.length > 0) {
+        groups = normalizeGroups(saveData.Groups);
+        labels = normalizeLabelNames(saveData.Labels);
+        ensureLabelsBoundToGroups();
+        activeGroupNum = groups[0].Num;
+
+        distance.value = saveData.Distance || Constants.DEFAULTFONTSIZE;
+        opacity.value = saveData.Opacity || Constants.DEFAULTOPACITY;
+        strokeWidth.value = saveData.Stroke || Constants.DEFAULTSTROKE;
+    }
+    else {
+        groups = getDefaultGroups();
+        labels = normalizeLabelNames(Constants.DEFAULTSET.map((label) => ({ ...label })));
+        activeGroupNum = groups[0].Num;
+
+        distance.value = Constants.DEFAULTFONTSIZE;
+        opacity.value = Constants.DEFAULTOPACITY;
+        strokeWidth.value = Constants.DEFAULTSTROKE;
+
+        await Save();
+    }
+
     distance.max = "999";
     distance.min = "1";
     distance.maxLength = 4;
-    distance.value = saveData?.Distance ? saveData.Distance : Constants.DEFAULTFONTSIZE;
-    distance.oninput = (ev) => {
-        checkValue(ev.target);
-    };
+    distance.oninput = () => validateRangeInput(distance);
 
-    ///Setup Opacity Configuration
     opacity.max = "99";
     opacity.min = "1";
     opacity.maxLength = 2;
-    opacity.value = saveData?.Opacity ? saveData.Opacity : Constants.DEFAULTOPACITY;
-    opacity.oninput = (ev) => {
-        checkValue(ev.target);
+    opacity.oninput = () => validateRangeInput(opacity);
+
+    strokeWidth.max = "20";
+    strokeWidth.min = "0";
+    strokeWidth.maxLength = 2;
+    strokeWidth.oninput = () => validateRangeInput(strokeWidth);
+
+    groupDistance.max = "999";
+    groupDistance.min = "1";
+    groupDistance.maxLength = 4;
+    groupDistance.oninput = () => validateRangeInput(groupDistance);
+
+    groupOpacity.max = "99";
+    groupOpacity.min = "1";
+    groupOpacity.maxLength = 2;
+    groupOpacity.oninput = () => validateRangeInput(groupOpacity);
+
+    groupStroke.max = "20";
+    groupStroke.min = "0";
+    groupStroke.maxLength = 2;
+    groupStroke.oninput = () => validateRangeInput(groupStroke);
+
+    settingsTab.onclick = () => {
+        mode = "settings";
+        renderView();
     };
 
-    ///Setup Stroke Configuration
-    strokewidth.max = "20";
-    strokewidth.min = "0";
-    strokewidth.maxLength = 2;
-    strokewidth.value = saveData?.Stroke ? saveData.Stroke : Constants.DEFAULTSTROKE;
-    strokewidth.oninput = (ev) => {
-        checkValue(ev.target);
+    setButtonIcon(removeGroupButton, X);
+
+    removeGroupButton.onclick = () => removeGroup();
+
+    groupNameInput.oninput = () => {
+        const group = getActiveGroup();
+        if (!group) return;
+        group.Name = groupNameInput.value.slice(0, NAME_MAX_LENGTH) || "Unnamed Group";
+        renderSidebar();
     };
 
-    //Create Export Button
-    const exportButton = document.createElement('input');
-    exportButton.type = "image";
-    exportButton.className = "Icon clickable";
+    groupIconSelect.onchange = () => {
+        const group = getActiveGroup();
+        if (!group) return;
+        group.Icon = groupIconSelect.value;
+        renderSidebar();
+    };
+
+    groupIconColorInput.oninput = () => {
+        const group = getActiveGroup();
+        if (!group) return;
+        group.IconColor = groupIconColorInput.value;
+        renderSidebar();
+    };
+
+    groupDistance.oninput = () => {
+        const group = getActiveGroup();
+        if (!group) return;
+        validateRangeInput(groupDistance);
+        group.TextSizeOverride = groupDistance.value;
+    };
+
+    groupOpacity.oninput = () => {
+        const group = getActiveGroup();
+        if (!group) return;
+        validateRangeInput(groupOpacity);
+        group.BgOpacityOverride = groupOpacity.value;
+    };
+
+    groupStroke.oninput = () => {
+        const group = getActiveGroup();
+        if (!group) return;
+        validateRangeInput(groupStroke);
+        group.OutlineStrokeOverride = groupStroke.value;
+    };
+
+    clearGroupDistance.onclick = () => {
+        const group = getActiveGroup();
+        if (!group) return;
+        delete group.TextSizeOverride;
+        groupDistance.value = distance.value;
+    };
+
+    clearGroupOpacity.onclick = () => {
+        const group = getActiveGroup();
+        if (!group) return;
+        delete group.BgOpacityOverride;
+        groupOpacity.value = opacity.value;
+    };
+
+    clearGroupStroke.onclick = () => {
+        const group = getActiveGroup();
+        if (!group) return;
+        delete group.OutlineStrokeOverride;
+        groupStroke.value = strokeWidth.value;
+    };
+
+    labelSort.onclick = () => {
+        if (mode !== "group") return;
+        sortActiveGroupLabels();
+    };
+
+    fileButton.onchange = async () => {
+        if (!fileButton.files || fileButton.files.length === 0) return;
+
+        const file = fileButton.files[0];
+        const reader = new FileReader();
+        reader.readAsText(file);
+
+        reader.onload = async () => {
+            try {
+                const parsedSaveData = JSON.parse(reader.result as string) as ISaveData;
+                await ImportData(parsedSaveData);
+                OBR.notification.show("Import Complete!", "SUCCESS");
+            }
+            catch (error) {
+                OBR.notification.show(`The import failed - ${error}`, "ERROR");
+            }
+            finally {
+                fileButton.value = "";
+            }
+        };
+
+        reader.onerror = () => {
+            OBR.notification.show(`The import failed - ${reader.error}`, "ERROR");
+            fileButton.value = "";
+        };
+    };
+
+    const exportButton = document.createElement("button");
+    exportButton.type = "button";
+    exportButton.className = "settings-action";
     exportButton.id = "exportButton";
-    exportButton.onclick = async function () {
-        await ExportData();
-    };
-    exportButton.src = "/export.svg";
-    exportButton.title = "Export Data";
-    exportButton.height = 20;
-    exportButton.width = 20;
+    exportButton.onclick = async () => ExportData();
+    exportButton.textContent = "Export";
     mainButtonContainer.appendChild(exportButton);
 
-    //Create Import Button
-    const importButton = document.createElement('input');
-    importButton.type = "image";
-    importButton.className = "Icon clickable";
+    const importButton = document.createElement("button");
+    importButton.type = "button";
+    importButton.className = "settings-action";
     importButton.id = "importButton";
-    importButton.onclick = async function () {
-        document.getElementById("fileButton")!.click();
-    };
-    importButton.src = "/import.svg";
-    importButton.title = "Import Data";
-    importButton.height = 20;
-    importButton.width = 20;
+    importButton.onclick = async () => fileButton.click();
+    importButton.textContent = "Import";
     mainButtonContainer.appendChild(importButton);
 
-    const fileButton = document.createElement('input');
-    fileButton.type = "file";
-    fileButton.id = "fileButton";
-    fileButton.title = "Choose a file to import"
-    fileButton.className = "tinyType";
-    fileButton.hidden = true;
-    fileButton.onchange = async function () {
-        console.log('FILE ADDED');
-
-        if (fileButton.files && fileButton.files.length > 0) {
-            let file = fileButton.files[0];
-            let reader = new FileReader();
-
-            reader.readAsText(file);
-
-            reader.onload = async function () {
-                try {
-                    const saveData: ISaveData = JSON.parse(reader.result as string);
-                    await ImportData(saveData);
-                    OBR.notification.show("Import Complete!", "SUCCESS");
-                }
-                catch (error) {
-                    OBR.notification.show(`The import failed - ${error}`, "ERROR");
-                }
-            };
-
-            reader.onerror = function () {
-                console.log(reader.error);
-            };
-        }
-    }
-    mainButtonContainer.appendChild(fileButton);
-
-
-    //Create Save Button
-    const saveButton = document.createElement('input');
+    topRightActionContainer.innerHTML = "";
+    const saveButton = document.createElement("input");
     saveButton.type = "image";
     saveButton.className = "Icon clickable";
     saveButton.id = "saveButton";
-    saveButton.onclick = async function () {
-        await Save();
-    };
+    saveButton.onclick = async () => Save();
     saveButton.src = "/save.svg";
     saveButton.title = "Save Changes";
     saveButton.height = 20;
     saveButton.width = 20;
-    mainButtonContainer.appendChild(saveButton);
+    topRightActionContainer.appendChild(saveButton);
 
-    //Create Add Button
-    const addButton = document.createElement('input');
-    addButton.type = "image";
-    addButton.className = "Icon clickable";
-    addButton.id = "addButton";
-    addButton.onclick = async function () {
-        await AddToGroup();
-    };
-    addButton.src = "/add.svg";
-    addButton.title = "Add Label";
-    addButton.height = 20;
-    addButton.width = 20;
-    mainButtonContainer.appendChild(addButton);
-
-    //Create Reset Button
-    const resetButton = document.createElement('input');
-    resetButton.type = "image";
-    resetButton.className = "Icon clickable";
+    const resetButton = document.createElement("button");
+    resetButton.type = "button";
+    resetButton.className = "settings-action";
     resetButton.id = "resetButton";
-    resetButton.onclick = async function () {
-        await Reset();
-    };
-    resetButton.src = "/reset.svg";
-    resetButton.title = "Reset to Default Labels";
-    resetButton.height = 20;
-    resetButton.width = 20;
+    resetButton.onclick = async () => Reset();
+    resetButton.textContent = "Reset";
     mainButtonContainer.appendChild(resetButton);
 
-    //Setup Sorters
-    headerRow.onclick = async function () {
-        var table, rows, switching, i, x, y, shouldSwitch;
-        table = document.getElementById("label-list");
-        switching = true;
+    renderView();
 
-        while (switching) {
-            switching = false;
-            rows = table.getElementsByClassName("data-row");
-
-            for (i = 0; i < rows.length - 1; i++) {
-                shouldSwitch = false;
-                x = rows[i].getElementsByTagName("td")[1];
-                y = rows[i + 1].getElementsByTagName("td")[1];
-
-                // Compare the values based on the sorting order
-                if (sortAscending) {
-                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                } else {
-                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                }
-            }
-
-            if (shouldSwitch) {
-                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                switching = true;
-            }
-        }
-
-        // Toggle the sorting order for the next click
-        sortAscending = !sortAscending;
-    };
-
-    // Once all loaded, display the extension.
     loadingApp.style.display = "none";
     labelApp.style.display = "";
-
-    // this function will convert a string to an integer
-    // beware this will throw an exception if the value does not parse properly
-    function int(value) {
-        return parseInt(value);
-    }
-
-    // this checks the value and updates it on the control, if needed
-    function checkValue(sender) {
-        let min = sender.min;
-        let max = sender.max;
-        let value = int(sender.value);
-        if (value > max) {
-            sender.value = max;
-        }
-        else if (value < min) {
-            sender.value = min;
-        }
-    }
-
-    function deleteRow(event: MouseEvent): void {
-        event.preventDefault();
-
-        const row = (event.target as HTMLElement).closest('tr');
-
-        if (row && row.rowIndex > 0 && window.confirm(`Are you sure you want to delete ${row.children[1].innerHTML}?`)) {
-            row.remove();
-        }
-    }
-
-    const table = document.getElementById('table-one');
-
-    if (table) {
-        table.addEventListener('contextmenu', deleteRow);
-    }
 }

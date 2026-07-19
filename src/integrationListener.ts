@@ -21,6 +21,7 @@ export function InitiateListeners()
                 // If for some reason the settings aren't established, set the defaults
                 let currentDistance = saveData.Distance ?? "36";
                 let currentOpacity = saveData.Opacity ?? "85";
+                let currentStroke = saveData.Stroke ?? Constants.DEFAULTSTROKE;
 
                 for (const transmitData of transmitDataPack)
                 {
@@ -44,15 +45,21 @@ export function InitiateListeners()
                         currentLabel.Direction = existingLabel.Direction;
                         currentLabel.Color = existingLabel.Color;
                         currentLabel.Id = existingLabel.Id;
+                        currentLabel.Group = existingLabel.Group;
                     }
+
+                    const targetGroup = saveData.Groups?.find((group) => group.Num === currentLabel.Group);
+                    const nextDistance = targetGroup?.TextSizeOverride || currentDistance;
+                    const nextOpacity = targetGroup?.BgOpacityOverride || currentOpacity;
+                    const nextStroke = targetGroup?.OutlineStrokeOverride || currentStroke;
 
                     const targetToken = sceneTokens.find(x => x.id === transmitData.TokenId);
                     if (targetToken)
                         await LabelLogic.UpdateLabel(targetToken,
                             currentLabel,
-                            currentDistance,
-                            currentOpacity,
-                            Constants.DEFAULTSTROKE,
+                            nextDistance,
+                            nextOpacity,
+                            nextStroke,
                             transmitData.Show);
                 }
             }

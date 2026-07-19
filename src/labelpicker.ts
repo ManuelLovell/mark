@@ -1,173 +1,174 @@
 import OBR, { Image, Path } from "@owlbear-rodeo/sdk";
+import { createElement, Tag, Shield, Bolt, Star, Skull, Heart, Plus, X, Settings2, Zap, Flame, SunMedium, MoonStar, Sparkles, Gem, CircleAlert, TriangleAlert, Ghost, Crown, Sword, Compass } from "lucide";
 import { LabelLogic } from "./label-logic";
 import { Constants } from "./constants";
-import * as Utilities from './utilities';
-import './style.css'
+import * as Utilities from "./utilities";
+import "./style.css";
 
-OBR.onReady(async () =>
-{
+type GroupIcon = {
+    key: string;
+    icon: typeof Tag;
+};
+
+const GROUP_ICONS: GroupIcon[] = [
+    { key: "tag", icon: Tag },
+    { key: "shield", icon: Shield },
+    { key: "bolt", icon: Bolt },
+    { key: "star", icon: Star },
+    { key: "skull", icon: Skull },
+    { key: "heart", icon: Heart },
+    { key: "plus", icon: Plus },
+    { key: "x", icon: X },
+    { key: "settings-2", icon: Settings2 },
+    { key: "zap", icon: Zap },
+    { key: "flame", icon: Flame },
+    { key: "sun-medium", icon: SunMedium },
+    { key: "moon-star", icon: MoonStar },
+    { key: "sparkles", icon: Sparkles },
+    { key: "gem", icon: Gem },
+    { key: "circle-alert", icon: CircleAlert },
+    { key: "triangle-alert", icon: TriangleAlert },
+    { key: "ghost", icon: Ghost },
+    { key: "crown", icon: Crown },
+    { key: "sword", icon: Sword },
+    { key: "compass", icon: Compass },
+];
+
+OBR.onReady(async () => {
     document.documentElement.style.borderRadius = "16px";
     document.documentElement.style.height = "100%";
 
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
-    const contextmenu = urlParams.get('contextmenu')!;
+    const contextMenu = urlParams.get("contextmenu");
 
     let attachedLabels: Path[] = [];
     const selected = await OBR.player.getSelection();
     const target = await OBR.scene.items.getItems(selected) as Image[];
 
-    if (selected?.length === 1)
-    {
+    if (selected?.length === 1) {
         attachedLabels = await OBR.scene.items.getItems<Path>((item: any) =>
-            item.attachedTo === target[0].id
-            && item.type === "PATH");
+            item.attachedTo === target[0].id && item.type === "PATH");
     }
 
-    // Set theme accordingly
     const theme = await OBR.theme.getTheme();
     Utilities.SetThemeMode(theme, document);
-    OBR.theme.onChange((theme) =>
-    {
-        Utilities.SetThemeMode(theme, document);
-    })
+    OBR.theme.onChange((nextTheme) => {
+        Utilities.SetThemeMode(nextTheme, document);
+    });
 
     const metadata = await OBR.room.getMetadata();
-    const meta = metadata[`${Constants.EXTENSIONID}/metadata_marks`] as any;
-    const saveData = meta?.saveData as ISaveData;
+    const meta = metadata[`${Constants.EXTENSIONID}/metadata_marks`] as { saveData?: ISaveData } | undefined;
+    const saveData = meta?.saveData;
 
-    if (saveData && saveData.Labels?.length > 0)
-    {
-        const list1 = document.querySelector<HTMLDivElement>('#label-list1')!;
-        const list2 = document.querySelector<HTMLDivElement>('#label-list2')!;
-        const list3 = document.querySelector<HTMLDivElement>('#label-list3')!;
-        const categoryOne = document.createElement('button');
-        categoryOne.className = "categoryButton";
-        categoryOne.onclick = () => ShowCategory("#1");
-        const categoryTwo = document.createElement('button');
-        categoryTwo.className = "categoryButton";
-        categoryTwo.onclick = () => ShowCategory("#2");
-        const categoryThree = document.createElement('button');
-        categoryThree.className = "categoryButton";
-        categoryThree.onclick = () => ShowCategory("#3");
-        const footerContainer = document.querySelector<HTMLDivElement>('.footered')!;
-        footerContainer.appendChild(categoryOne);
-        footerContainer.appendChild(categoryTwo);
-        footerContainer.appendChild(categoryThree);
+    const list = document.getElementById("picker-list") as HTMLDivElement;
+    const tabContainer = document.getElementById("picker-tabs") as HTMLDivElement;
+    const filterInput = document.getElementById("pickerFilter") as HTMLInputElement;
 
-        if (contextmenu)
-        {
-            list1.classList.remove("btn-group");
-            list1.classList.add("context-btn-group");
-
-            list2.classList.remove("btn-group");
-            list2.classList.add("context-btn-group");
-
-            list3.classList.remove("btn-group");
-            list3.classList.add("context-btn-group");
-        }
-
-        saveData.Groups.forEach((group) =>
-        {
-            switch (group.Num)
-            {
-                case '#1':
-                    categoryOne.innerText = group.Name;
-                    break;
-                case '#2':
-                    categoryTwo.innerText = group.Name;
-                    break;
-                case '#3':
-                    categoryThree.innerText = group.Name;
-                    break;
-                default:
-                    throw new Error('Invalid Group');
-            }
-        });
-
-        saveData.Labels.forEach((label) =>
-        {
-            if (label.Active)
-            {
-                const highlight = attachedLabels.find(attach => attach.name === label.Name);
-
-                const toggleButton = <HTMLButtonElement>document.createElement('button');
-                toggleButton.id = `toggle-${label.Id}`;
-                toggleButton.className = `group1${highlight ? " highlight" : ""}`;
-                toggleButton.value = label.Name;
-                toggleButton.title = label.Name;
-                toggleButton.textContent = label.Name;
-
-                if (label.Group === "#1")
-                {
-                    list1.appendChild(toggleButton);
-                }
-                else if (label.Group === "#2")
-                {
-                    list2.appendChild(toggleButton);
-                }
-                else
-                {
-                    list3.appendChild(toggleButton);
-                }
-            }
-        });
-
-        const toggleButtons = document.querySelectorAll('.group1');
-        toggleButtons.forEach(btn =>
-        {
-            btn.addEventListener('click', async (e: Event) => await ToggleLabel(e.currentTarget as Element));
-        });
-
-        ShowCategory("#1");
-
-        function ShowCategory(num: string): void
-        {
-            if (num === "#1")
-            {
-                list1.style.display = "";
-                list2.style.display = "none";
-                list3.style.display = "none";
-            }
-            else if (num === "#2")
-            {
-                list1.style.display = "none";
-                list2.style.display = "";
-                list3.style.display = "none";
-            }
-            else
-            {
-                list1.style.display = "none";
-                list2.style.display = "none";
-                list3.style.display = "";
-            }
-        }
-    }
-    else
-    {
-        document.querySelector("#label-list1")!.innerHTML = `
-        <div>
-            No labels found.
-        </div>`;
+    if (!saveData || !saveData.Labels || saveData.Labels.length === 0) {
+        list.innerHTML = "<div>No labels found.</div>";
+        return;
     }
 
-    async function ToggleLabel(elem: Element)
-    {
+    if (contextMenu) {
+        list.classList.remove("btn-group");
+        list.classList.add("context-btn-group");
+    }
+
+    const currentSaveData = saveData;
+
+    const groups = (currentSaveData.Groups && currentSaveData.Groups.length > 0)
+        ? currentSaveData.Groups
+        : [{ Num: "#1", Name: "Group #1" }];
+
+    let activeGroup = groups[0].Num;
+    let activeFilter = "";
+
+    function getIconForGroup(group: IGroup): typeof Tag {
+        const iconKey = group.Icon || "tag";
+        return (GROUP_ICONS.find((entry) => entry.key === iconKey) || GROUP_ICONS[0]).icon;
+    }
+
+    const renderTabs = () => {
+        tabContainer.innerHTML = "";
+
+        groups.forEach((group) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = `picker-group-tab ${group.Num === activeGroup ? "active" : ""}`;
+            button.title = group.Name;
+
+            const iconWrap = document.createElement("span");
+            iconWrap.className = "picker-group-icon";
+            iconWrap.style.color = group.IconColor || "#ffffff";
+            iconWrap.appendChild(createElement(getIconForGroup(group)));
+
+            button.appendChild(iconWrap);
+            button.onclick = () => {
+                activeGroup = group.Num;
+                renderTabs();
+                renderLabels();
+            };
+            tabContainer.appendChild(button);
+        });
+    };
+
+    const renderLabels = () => {
+        list.innerHTML = "";
+
+        const labelsToRender = currentSaveData.Labels
+            .filter((label) => label.Active && label.Group === activeGroup)
+            .filter((label) => {
+                if (activeFilter.length === 0) return true;
+                return label.Name.toLowerCase().includes(activeFilter);
+            });
+
+        if (labelsToRender.length === 0) {
+            list.innerHTML = activeFilter.length > 0
+                ? "<div class='picker-empty'>No labels match your filter.</div>"
+                : "<div class='picker-empty'>No active labels in this group.</div>";
+            return;
+        }
+
+        labelsToRender.forEach((label) => {
+            const highlight = attachedLabels.find((attach) => attach.name === label.Name);
+            const button = document.createElement("button");
+            button.id = `toggle-${label.Id}`;
+            button.className = `group1${highlight ? " highlight" : ""}`;
+            button.value = label.Name;
+            button.title = label.Name;
+            button.textContent = label.Name;
+            button.addEventListener("click", async (event) => {
+                await ToggleLabel(event.currentTarget as Element);
+            });
+            list.appendChild(button);
+        });
+    };
+
+    renderTabs();
+    renderLabels();
+
+    filterInput.oninput = () => {
+        activeFilter = filterInput.value.trim().toLowerCase();
+        renderLabels();
+    };
+
+    async function ToggleLabel(elem: Element) {
         const cleanedId = elem.id.substring(7);
-        const label = saveData.Labels.find(label => label.Id === cleanedId);
+        const label = currentSaveData.Labels.find((existingLabel) => existingLabel.Id === cleanedId);
+        if (!label) return;
 
-        if (selected?.length === 1)
-        {
+        if (selected?.length === 1) {
             elem.className = elem.className === "group1" ? "group1 highlight" : "group1";
         }
 
-        target.forEach(async (t) =>
-        {
-            await LabelLogic.UpdateLabel(t,
-                label!,
-                saveData.Distance,
-                saveData.Opacity,
-                saveData.Stroke);
+        target.forEach(async (token) => {
+            const group = groups.find((existingGroup) => existingGroup.Num === label.Group);
+            const nextDistance = group?.TextSizeOverride || currentSaveData.Distance;
+            const nextOpacity = group?.BgOpacityOverride || currentSaveData.Opacity;
+            const nextStroke = group?.OutlineStrokeOverride || currentSaveData.Stroke;
+
+            await LabelLogic.UpdateLabel(token, label, nextDistance, nextOpacity, nextStroke);
         });
     }
 });

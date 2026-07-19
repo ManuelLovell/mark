@@ -11,47 +11,105 @@
     <div id="app">
         <div id="loadingApp" class="center">Loading...</div>
         <div id="labelApp" style="display:none;">
-            <div id="controlContainer">
-                <div style="display:flex;">
-                    <div id="bannerText">Marked!</div>
-                    <div id="patreonContainer"></div>
-                </div>
-                <div id="buttonLabels">
-                    <div class="nameGroup center">
-                        <label for="gr1n">Group #1</label><br>
-                        <input type="text" id="gr1n" name="gr1n" maxlength="15" size="10">
-                    </div>
-                    <div class="nameGroup center">
-                        <label for="gr2n">Group #2</label><br>
-                        <input type="text" id="gr2n" name="gr2n" maxlength="15" size="10">
-                    </div>
-                    <div class="nameGroup center">
-                        <label for="gr3n">Group #3</label><br>
-                        <input type="text" id="gr3n" name="gr3n" maxlength="15" size="10">
-                    </div>
-                </div>
-                <div id="mainButtonsGroup" class="center">
-                    <label id="tip_textsize" for="distance"><embed class="menu-svg" src="/text.svg" /> </label><input type="number" id="distance" name="distance">
-                    <label id="tip_opacity" for="opacity"><embed class="menu-svg" src="/opacity.svg" /> </label><input type="number" id="opacity" name="opacity">
-                    <label id="tip_stroke" for="stroke"><embed class="menu-svg" src="/stroke.svg" /> </label><input type="number" id="stroke" name="stroke">
-                    <div id="mainButtons"></div>
-                </div>
+            <div id="topHeader">
+                <div id="bannerText">Marked!</div>
+                <div id="patreonContainer"></div>
             </div>
-            <div id="tableContainer">
-                <table id="table-one" style="width:100%">
-                    <thead>
-                        <tr id="tableHeader">
-                            <th style="width: 5%">🔛</th>
-                            <th id="labelSort" style="width: 55%">Label Name</th>
-                            <th style="width: 10%">Group</th>
-                            <th style="width: 20%">Direction</th>
-                            <th style="width: 5%">🖍️</th>
-                            <th style="width: 5%">#️⃣</th>
-                        </tr>
-                    </thead>
-                    <tbody id="label-list"></tbody>
-                </table>
+
+            <div id="workspaceShell">
+                <div id="sidebarScrim" aria-hidden="true"></div>
+                <aside id="sidebar" aria-label="Groups">
+                    <div id="groupTabs" class="group-tabs"></div>
+                    <button id="settingsTab" class="group-tab settings-tab" type="button" title="Settings">
+                        <span class="tab-icon"></span>
+                        <span class="tab-name">Settings</span>
+                    </button>
+                </aside>
+
+                <main id="contentPane">
+                    <section id="groupPanel">
+                        <div class="panel-card">
+                            <div class="panel-title-row">
+                                <label class="field title-field" for="groupNameInput">
+                                    <span>Group Name</span>
+                                    <input type="text" id="groupNameInput" maxlength="30" placeholder="Group name" />
+                                </label>
+                                <button id="removeGroupButton" type="button" class="delete-group-button" title="Delete Group"><span class="delete-icon"></span></button>
+                            </div>
+
+                            <div class="group-config-row group-icon-row">
+                                <label class="field half-field" for="groupIconSelect">
+                                    <span>Icon</span>
+                                    <select id="groupIconSelect"></select>
+                                </label>
+
+                                <label class="field half-field" for="groupIconColorInput">
+                                    <span>Icon Color</span>
+                                    <input type="color" id="groupIconColorInput" />
+                                </label>
+                            </div>
+
+                            <div class="group-config-row group-override-row">
+                                <label id="tip_group_textsize" class="group-override-control" for="groupDistance" title="Group Text Size Override">
+                                    <img src="/text.svg" alt="Text size" />
+                                    <input type="number" id="groupDistance" name="groupDistance" aria-label="Group text size override">
+                                    <button type="button" id="clearGroupDistance" class="group-override-clear" title="Use default text size">x</button>
+                                </label>
+
+                                <label id="tip_group_opacity" class="group-override-control" for="groupOpacity" title="Group BG Opacity Override">
+                                    <img src="/opacity.svg" alt="Background opacity" />
+                                    <input type="number" id="groupOpacity" name="groupOpacity" aria-label="Group background opacity override">
+                                    <button type="button" id="clearGroupOpacity" class="group-override-clear" title="Use default background opacity">x</button>
+                                </label>
+
+                                <label id="tip_group_stroke" class="group-override-control" for="groupStroke" title="Group Outline Stroke Override">
+                                    <img src="/stroke.svg" alt="Outline stroke" />
+                                    <input type="number" id="groupStroke" name="groupStroke" aria-label="Group outline stroke override">
+                                    <button type="button" id="clearGroupStroke" class="group-override-clear" title="Use default outline stroke">x</button>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="tableContainer">
+                            <table id="table-one" style="width:100%">
+                                <thead>
+                                    <tr id="tableHeader">
+                                        <th style="width: 6%"></th>
+                                        <th id="labelSort" style="width: 54%">Label Name</th>
+                                        <th style="width: 20%">Direction</th>
+                                        <th style="width: 10%"></th>
+                                        <th style="width: 10%">#</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="label-list"></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section id="settingsPanel" style="display:none;">
+                        <div class="panel-card">
+                            <h2>Settings</h2>
+                            <div id="mainButtonsGroup" class="settings-list">
+                                <label id="tip_textsize" for="distance" class="settings-row">
+                                    <span>Label Text Size</span>
+                                    <input type="number" id="distance" name="distance">
+                                </label>
+                                <label id="tip_opacity" for="opacity" class="settings-row">
+                                    <span>Label BG Opacity</span>
+                                    <input type="number" id="opacity" name="opacity">
+                                </label>
+                                <label id="tip_stroke" for="stroke" class="settings-row">
+                                    <span>Label Outline Stroke</span>
+                                    <input type="number" id="stroke" name="stroke">
+                                </label>
+                                <div id="mainButtons"></div>
+                            </div>
+                        </div>
+                    </section>
+                </main>
             </div>
+
+            <input type="file" id="fileButton" title="Choose a file to import" class="tinyType" hidden>
         </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
