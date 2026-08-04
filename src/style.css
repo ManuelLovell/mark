@@ -638,6 +638,7 @@ option {
 #picker-list {
     flex: 1;
     min-height: 0;
+    line-break:anywhere;
 }
 
 #picker-sidebar {
