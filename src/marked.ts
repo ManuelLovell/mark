@@ -182,6 +182,21 @@ function getDefaultGroups(): IGroup[] {
     }));
 }
 
+function normalizeGroupNumber(groupNum: string | undefined, fallbackIndex: number): string {
+    const rawValue = (groupNum || `#${fallbackIndex + 1}`).toString().trim();
+    if (!rawValue) return `#${fallbackIndex + 1}`;
+    if (rawValue.startsWith("#")) return rawValue;
+    return `#${rawValue}`;
+}
+
+function getGroupIconForName(name: string, index: number): string {
+    const normalizedName = name.toLowerCase();
+    if (normalizedName.includes("buff")) return "shield";
+    if (normalizedName.includes("extra")) return "bolt";
+    if (normalizedName.includes("cond")) return "tag";
+    return GROUP_ICONS[index % GROUP_ICONS.length].key;
+}
+
 function normalizeGroups(source?: IGroup[]): IGroup[] {
     const defaults = getDefaultGroups();
     if (!source || source.length === 0) return defaults;
@@ -189,9 +204,9 @@ function normalizeGroups(source?: IGroup[]): IGroup[] {
     const normalized = source
         .slice(0, MAX_GROUPS)
         .map((group, index) => ({
-            Num: group.Num || `#${index + 1}`,
-            Name: (group.Name || `Group ${index + 1}`).trim().slice(0, NAME_MAX_LENGTH),
-            Icon: group.Icon || GROUP_ICONS[index % GROUP_ICONS.length].key,
+            Num: normalizeGroupNumber(group.Num, index),
+            Name: (group.Name || `Group ${index + 1}`).trim().slice(0, NAME_MAX_LENGTH) || `Group ${index + 1}`,
+            Icon: group.Icon || getGroupIconForName(group.Name || `Group ${index + 1}`, index),
             IconColor: group.IconColor || DEFAULT_GROUP_COLOR,
             TextSizeOverride: group.TextSizeOverride,
             BgOpacityOverride: group.BgOpacityOverride,
@@ -213,11 +228,45 @@ function ensureLabelsBoundToGroups(): void {
     }
 }
 
-function normalizeLabelNames(source: ILabelData[]): ILabelData[] {
-    return source.map((label) => ({
-        ...label,
-        Name: (label.Name || "Unnamed Label").trim().slice(0, NAME_MAX_LENGTH) || "Unnamed Label",
-    }));
+function normalizeLabelNames(source: ILabelData[] | undefined, normalizedGroups: IGroup[] = groups): ILabelData[] {
+    const safeSource = Array.isArray(source) ? source : [];
+    const groupNameMap = new Map(normalizedGroups.map((group) => [group.Name.trim().toLowerCase(), group.Num]));
+    const groupNumberSet = new Set(normalizedGroups.map((group) => group.Num));
+
+    return safeSource.map((label, index) => {
+        const rawGroupValue = (label as ILabelData & { group?: string }).group ?? label.Group;
+        let resolvedGroup = normalizedGroups[0]?.Num ?? "#1";
+
+        if (typeof rawGroupValue === "string" && rawGroupValue.trim()) {
+            const trimmedGroup = rawGroupValue.trim();
+            if (groupNumberSet.has(trimmedGroup)) {
+                resolvedGroup = trimmedGroup;
+            }
+            else {
+                const prefixedGroup = trimmedGroup.startsWith("#") ? trimmedGroup : `#${trimmedGroup}`;
+                if (groupNumberSet.has(prefixedGroup)) {
+                    resolvedGroup = prefixedGroup;
+                }
+                else {
+                    const byName = groupNameMap.get(trimmedGroup.toLowerCase());
+                    if (byName) {
+                        resolvedGroup = byName;
+                    }
+                }
+            }
+        }
+
+        return {
+            ...label,
+            Id: label.Id || `imported-${index + 1}`,
+            Name: (label.Name || "Unnamed Label").trim().slice(0, NAME_MAX_LENGTH) || "Unnamed Label",
+            Color: label.Color || "#ffffff",
+            Direction: label.Direction || "Top",
+            Active: label.Active ?? 1,
+            Counter: label.Counter ?? 0,
+            Group: resolvedGroup,
+        };
+    });
 }
 
 function createLabelForGroup(groupNum: string): ILabelData {
@@ -518,14 +567,14 @@ async function ExportData(): Promise<void> {
 async function ImportData(saveData: ISaveData): Promise<void> {
     groups = normalizeGroups(saveData.Groups);
     labels = saveData.Labels?.length > 0
-        ? normalizeLabelNames(saveData.Labels)
-        : normalizeLabelNames(Constants.DEFAULTSET.map((label) => ({ ...label })));
+        ? normalizeLabelNames(saveData.Labels, groups)
+        : normalizeLabelNames(Constants.DEFAULTSET.map((label) => ({ ...label })), groups);
     ensureLabelsBoundToGroups();
 
     activeGroupNum = groups[0].Num;
-    distance.value = saveData.Distance || Constants.DEFAULTFONTSIZE;
-    opacity.value = saveData.Opacity || Constants.DEFAULTOPACITY;
-    strokeWidth.value = saveData.Stroke || Constants.DEFAULTSTROKE;
+    distance.value = saveData.Distance ? String(saveData.Distance) : Constants.DEFAULTFONTSIZE;
+    opacity.value = saveData.Opacity ? String(saveData.Opacity) : Constants.DEFAULTOPACITY;
+    strokeWidth.value = saveData.Stroke ? String(saveData.Stroke) : Constants.DEFAULTSTROKE;
 
     renderView();
     await Save();
@@ -606,13 +655,13 @@ async function SetupConfigAction(): Promise<void> {
 
     if (saveData && saveData.Labels?.length > 0) {
         groups = normalizeGroups(saveData.Groups);
-        labels = normalizeLabelNames(saveData.Labels);
+        labels = normalizeLabelNames(saveData.Labels, groups);
         ensureLabelsBoundToGroups();
         activeGroupNum = groups[0].Num;
 
-        distance.value = saveData.Distance || Constants.DEFAULTFONTSIZE;
-        opacity.value = saveData.Opacity || Constants.DEFAULTOPACITY;
-        strokeWidth.value = saveData.Stroke || Constants.DEFAULTSTROKE;
+        distance.value = saveData.Distance ? String(saveData.Distance) : Constants.DEFAULTFONTSIZE;
+        opacity.value = saveData.Opacity ? String(saveData.Opacity) : Constants.DEFAULTOPACITY;
+        strokeWidth.value = saveData.Stroke ? String(saveData.Stroke) : Constants.DEFAULTSTROKE;
     }
     else {
         groups = getDefaultGroups();
