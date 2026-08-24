@@ -1,8 +1,8 @@
 import OBR, { Image, Path } from "@owlbear-rodeo/sdk";
 import { createElement, Tag, Shield, Bolt, Star, Skull, Heart, Plus, X, Settings2, Zap, Flame, SunMedium, MoonStar, Sparkles, Gem, CircleAlert, TriangleAlert, Ghost, Crown, Sword, Compass } from "lucide";
 import { LabelLogic } from "./label-logic";
-import { Constants } from "./constants";
 import * as Utilities from "./utilities";
+import { readSaveDataFromRoomMetadata } from "./saveDataCodec";
 import "./style.css";
 
 type GroupIcon = {
@@ -58,8 +58,7 @@ OBR.onReady(async () => {
     });
 
     const metadata = await OBR.room.getMetadata();
-    const meta = metadata[`${Constants.EXTENSIONID}/metadata_marks`] as { saveData?: ISaveData } | undefined;
-    const saveData = meta?.saveData;
+    const saveData = readSaveDataFromRoomMetadata(metadata as Record<string, unknown>);
 
     const list = document.getElementById("picker-list") as HTMLDivElement;
     const tabContainer = document.getElementById("picker-tabs") as HTMLDivElement;

@@ -6,6 +6,7 @@ import { Constants } from './constants';
 import { InitiateListeners } from './integrationListener';
 import { CreateTooltips } from './bsTooltips';
 import * as Utilities from './utilities';
+import { buildRoomMetadataPatch, readSaveDataFromRoomMetadata } from './saveDataCodec';
 import './style.css'
 
 type ViewMode = "group" | "settings";
@@ -499,8 +500,7 @@ function getSaveData(): ISaveData {
 
 async function Save(): Promise<void> {
     const saveData = getSaveData();
-    const markMeta: Metadata = {};
-    markMeta[`${Constants.EXTENSIONID}/metadata_marks`] = { saveData };
+    const markMeta: Metadata = buildRoomMetadataPatch(saveData);
     await OBR.room.setMetadata(markMeta);
 }
 
@@ -602,8 +602,7 @@ async function SetupConfigAction(): Promise<void> {
     renderGroupIconOptions();
 
     const roomLabels = await OBR.room.getMetadata();
-    const meta = roomLabels[`${Constants.EXTENSIONID}/metadata_marks`] as { saveData?: ISaveData } | undefined;
-    const saveData = meta?.saveData;
+    const saveData = readSaveDataFromRoomMetadata(roomLabels as Record<string, unknown>);
 
     if (saveData && saveData.Labels?.length > 0) {
         groups = normalizeGroups(saveData.Groups);

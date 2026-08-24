@@ -2,6 +2,7 @@ import OBR, { isImage } from "@owlbear-rodeo/sdk";
 import { Constants } from "./constants";
 import { isValidHexColor } from "./utilities";
 import { LabelLogic } from "./label-logic";
+import { readSaveDataFromRoomMetadata } from "./saveDataCodec";
 
 export function InitiateListeners()
 {
@@ -15,8 +16,9 @@ export function InitiateListeners()
                 // Find the room data to see what we can use
                 const metadata = await OBR.room.getMetadata();
                 const sceneTokens = await OBR.scene.items.getItems(x => isImage(x));
-                const meta = metadata[`${Constants.EXTENSIONID}/metadata_marks`] as any;
-                const saveData = meta?.saveData as ISaveData;
+                const saveData = readSaveDataFromRoomMetadata(metadata as Record<string, unknown>);
+                if (!saveData)
+                    return;
 
                 // If for some reason the settings aren't established, set the defaults
                 let currentDistance = saveData.Distance ?? "36";
