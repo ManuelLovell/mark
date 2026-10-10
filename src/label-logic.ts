@@ -183,6 +183,7 @@ export class LabelLogic {
                     .metadata(markMeta)
                     .attachedTo(namePlate.id)
                     .disableAttachmentBehavior(["ROTATION", "SCALE"])
+                    .zIndex(100)
                     .locked(true)
                     .build();
 
@@ -198,9 +199,9 @@ export class LabelLogic {
                     .strokeWidth(4)
                     .strokeOpacity(.5)
                     .disableAutoZIndex(true)
-                    .zIndex(500)
+                    .zIndex(5001)
                     .attachedTo(namePlate.id)
-                    .layer("CONTROL")
+                    .layer("DRAWING")
                     .build();
                        
                 const counterText = buildText()
@@ -212,8 +213,8 @@ export class LabelLogic {
                     .strokeOpacity(1)
                     .metadata({ [`${Constants.EXTENSIONID}/counterId`]: namePlate.id })
                     .position({ x: subPlatePos.x + 40, y: subPlatePos.y + 1})
-                    .layer("CONTROL")
-                    .zIndex(1000)
+                    .layer("DRAWING")
+                    .zIndex(10001)
                     .attachedTo(namePlate.id)
                     .build();
 
@@ -239,7 +240,7 @@ export class LabelLogic {
                     .disableAutoZIndex(true)
                     .attachedTo(namePlate.id)
                     .zIndex(500)
-                    .layer("CONTROL")
+                    .layer("DRAWING")
                     .build();
 
                 platesToAdd.push(subNamePlate, minusButton, counterText,addButton);
